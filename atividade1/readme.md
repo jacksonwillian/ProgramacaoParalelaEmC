@@ -15,3 +15,8 @@ padrao a ser usado no txt ABAIXO:
 | 1        | 280    | 100000        |
 | 2        | 278    | 100000        |
 | 3        | 260    | 100000        |
+
+
+Obs.: Para criar o executável:
+
+        gcc -Wall -pedantic -o <binario> <codigofonte> -lpthread

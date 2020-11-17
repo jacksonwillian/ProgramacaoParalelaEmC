@@ -13,6 +13,7 @@ typedef struct {
     int id;
     int indiceInicio;
     int indiceFim;
+    soma_t somaParcial;
     int *vetor;
 
 } blocoTrabalho;
@@ -21,22 +22,15 @@ typedef struct {
 // funcao de soma usa pela threads
 void *fSomarVetorThread(void *argumento) {  
 
-    // declara variavel
-    blocoTrabalho * bloco;
-    soma_t *somaLocal;
-
-    // inicializa variavel
-    bloco = (blocoTrabalho *) argumento;
-    somaLocal = malloc(sizeof(soma_t));    
-    *somaLocal = 0;
+    // declara variavel e inicializa variavel
+    blocoTrabalho * bloco = (blocoTrabalho *) argumento;
 
     // realiza a soma
     for(int i = bloco->indiceInicio; i < bloco->indiceFim; i++){
-        *somaLocal += bloco->vetor[i];
+        bloco->somaParcial += bloco->vetor[i];
     }
 
-    // retorna o valor da soma
-    pthread_exit( (void*) somaLocal );
+    return NULL;
 }
 
 // funcao principal
@@ -57,7 +51,6 @@ int main(int argc, char **argv){
     vetor = malloc(sizeof(int) * tamanhoVetor);
     quantIndicesDoVetorPorThread = tamanhoVetor / quantThreads;
     resto = tamanhoVetor % quantThreads;
-    somaTotal = 0;
 
     // inicializa o vetor
     for (i = 0; i < tamanhoVetor; i++){
@@ -65,6 +58,7 @@ int main(int argc, char **argv){
     }
 
     // inicio da soma serial
+    somaTotal = 0; 
     clocksInicio = clock();
     for (i = 0; i < tamanhoVetor; i++){
         somaTotal += vetor[i];
@@ -79,6 +73,7 @@ int main(int argc, char **argv){
         blocos[i].indiceInicio = i * quantIndicesDoVetorPorThread;
         blocos[i].indiceFim = blocos[i].indiceInicio + quantIndicesDoVetorPorThread;
         blocos[i].vetor = vetor;
+        blocos[i].somaParcial = 0;
     }
     blocos[quantThreads-1].indiceFim += resto;
 
@@ -91,16 +86,12 @@ int main(int argc, char **argv){
     // realiza a soma
     somaTotal = 0;
     for(i=0; i<quantThreads; i++){
-        void *soma_parcial;
-        pthread_join(blocos[i].threadID, &soma_parcial);
-        somaTotal += *( (soma_t *)soma_parcial );
-        free(soma_parcial);
+        pthread_join(blocos[i].threadID, NULL);
+        somaTotal += blocos[i].somaParcial;
     }
     clocksFim = clock(); 
    
     printf("\nA soma do numeros do vetor [paral.]: %llu\nClocks decorridos %ld\n\n", somaTotal, (clocksFim - clocksInicio) );
-
-    pthread_exit(NULL);
 
     // libera memoria dinamicamente alocada
     free(vetor);
