@@ -2,97 +2,69 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-// apelida o tipo de dado para soma_t
-typedef unsigned long long soma_t;
+typedef long long soma_t;
 
-// define a estrutura de um bloco de trabalho
 typedef struct {
-
-    int id;
+    pthread_t thread_id;
     int indiceInicio;
     int indiceFim;
     soma_t somaParcial;
     int* vetor;
-
 } blocoTrabalho;
 
 
-// funcao de soma usa pela threads
 void* fSomarVetorThread(void* argumento) {
-
-    // declara variavel e inicializa variavel
     blocoTrabalho* bloco = (blocoTrabalho*)argumento;
-
-    // realiza a soma
+    soma_t somaParcial = 0;
     for (int i = bloco->indiceInicio; i < bloco->indiceFim; i++) {
-        bloco->somaParcial += bloco->vetor[i];
+        somaParcial += bloco->vetor[i];
     }
-
-    pthread_exit((void*)NULL);
+    bloco->somaParcial = somaParcial;
+    return argumento;
 }
+
 
 int main(int argc, char** argv) {
 
-    // declara variavel
     int i, quantIndicesDoVetorPorThread, resto, tamanhoVetor, quantThreads, * vetor;
     soma_t somaTotal;
     clock_t clocksInicio, clocksFim;
-    pthread_t* threads;
     blocoTrabalho* blocos;
 
-    // inicializa a variavel
     tamanhoVetor = atoi(argv[1]);
-    quantThreads = atoi(argv[2]);;
-    threads = malloc(sizeof(pthread_t) * quantThreads);
+    quantThreads = atoi(argv[2]);
     blocos = malloc(sizeof(blocoTrabalho) * quantThreads);
     vetor = malloc(sizeof(int) * tamanhoVetor);
     quantIndicesDoVetorPorThread = tamanhoVetor / quantThreads;
     resto = tamanhoVetor % quantThreads;
 
-    // inicializa o vetor
     for (i = 0; i < tamanhoVetor; i++) {
-        vetor[i] = rand() % 100000;
+        vetor[i] = rand() % 1000000000;
     }
 
-    // inicio da soma serial
-    somaTotal = 0;
-    clocksInicio = clock();
-    for (i = 0; i < tamanhoVetor; i++) {
-        somaTotal += vetor[i];
-    }
-    clocksFim = clock();
-
-    printf("\nA soma do numeros do vetor [serial]: %llu\nClocks decorridos %ld\n", somaTotal, (clocksFim - clocksInicio));
-
-    // inicio da soma paralela
     for (i = 0; i < quantThreads; i++) {
-        blocos[i].id = i;
         blocos[i].indiceInicio = i * quantIndicesDoVetorPorThread;
         blocos[i].indiceFim = blocos[i].indiceInicio + quantIndicesDoVetorPorThread;
         blocos[i].vetor = vetor;
-        blocos[i].somaParcial = 0;
     }
     blocos[quantThreads - 1].indiceFim += resto;
 
-    // cria as threads
     clocksInicio = clock();
     for (i = 0; i < quantThreads; i++) {
-        pthread_create(threads+i, NULL, fSomarVetorThread, blocos+i);
+        pthread_create(&(blocos[i].thread_id), NULL, fSomarVetorThread, &(blocos[i]));
     }
 
-    // realiza a soma
     somaTotal = 0;
+    void* bloco;
     for (i = 0; i < quantThreads; i++) {
-        pthread_join(threads[i], NULL);
-        somaTotal += blocos[i].somaParcial;
+        pthread_join(blocos[i].thread_id, &bloco);
+        somaTotal += ((blocoTrabalho*)bloco)->somaParcial;
     }
     clocksFim = clock();
 
-    printf("\nA soma do numeros do vetor [paral.]: %llu\nClocks decorridos %ld\n\n", somaTotal, (clocksFim - clocksInicio));
+    printf("\nN_Threads %d  Clocks %ld  Tamanho_Vetor %d  Soma %lld\n", quantThreads, (clocksFim - clocksInicio), tamanhoVetor, somaTotal);
 
-    // libera memoria dinamicamente alocada
     free(vetor);
-    free(threads);
     free(blocos);
 
     return 0;
