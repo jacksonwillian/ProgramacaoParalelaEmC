@@ -14,6 +14,7 @@ typedef struct {
     int* vetor;
     int quantThreads;
     int* quantBloqueadas;
+    struct timeval* tempoInicial;
     sem_t* semaforoBarreira1;
     sem_t* semaforoBarreira2;
 } blocoTrabalho;
@@ -25,15 +26,16 @@ void* fSomarVetorThread(void* argumento) {
 
     sem_wait(bloco->semaforoBarreira1);
     *(bloco->quantBloqueadas) += 1;
-    sem_post(bloco->semaforoBarreira1);
-
     if (*(bloco->quantBloqueadas) == bloco->quantThreads) {
+        sem_post(bloco->semaforoBarreira1);
+        gettimeofday(bloco->tempoInicial, 0);
         while (*(bloco->quantBloqueadas) > 0) {
             sem_post(bloco->semaforoBarreira2);
             *(bloco->quantBloqueadas) -= 1;
         }
     }
     else {
+        sem_post(bloco->semaforoBarreira1);
         sem_wait(bloco->semaforoBarreira2);
     }
 
@@ -77,12 +79,13 @@ int main(int argc, char** argv) {
         blocos[i].vetor = vetor;
         blocos[i].quantThreads = quantThreads;
         blocos[i].quantBloqueadas = &quantBloqueadas;
+        blocos[i].tempoInicial = &tempoInicial;
         blocos[i].semaforoBarreira1 = &semaforoBarreira1;
         blocos[i].semaforoBarreira2 = &semaforoBarreira2;
     }
     blocos[quantThreads - 1].indiceFim += resto;
 
-    gettimeofday(&tempoInicial, 0);
+
     for (i = 0; i < quantThreads; i++) {
         pthread_create(&(blocos[i].thread_id), NULL, fSomarVetorThread, &(blocos[i]));
     }
