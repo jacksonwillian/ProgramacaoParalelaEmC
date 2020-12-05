@@ -7,7 +7,6 @@
 typedef struct {
     pthread_t thread;
     int id;
-    int quantIngerida;
     int capacidadeMaxima;
     sem_t *garfoEsquerdo;
     sem_t *garfoDireito;
@@ -17,17 +16,22 @@ typedef struct {
 void* f_jantar (void* argumento) {
 
     filosofo_t *filosofo = (filosofo_t *)argumento;
+    int quantIngerida = 0;
+    int tempo = 0;
 
-    while (filosofo->quantIngerida < filosofo->capacidadeMaxima){
+    while (quantIngerida < filosofo->capacidadeMaxima){
         printf("\nFilosofo [%d] estah pensando...", filosofo->id);
         if (sem_trywait(filosofo->garfoEsquerdo) == 0 && sem_trywait(filosofo->garfoDireito) == 0){
-            printf("\nFilosofo [%d] estah comendo pela %dª vez.", filosofo->id, (filosofo->quantIngerida + 1));
-            filosofo->quantIngerida += 1;
+            printf("\nFilosofo [%d] estah comendo pela %dª vez.", filosofo->id, (quantIngerida + 1));
+            quantIngerida += 1;
             sem_post(filosofo->garfoEsquerdo);
             sem_post(filosofo->garfoDireito);
-            sleep(rand() % 20);
+            tempo = (1 + rand() % 21);
+            sleep(tempo);
         } else {
             printf("\nOoops! O Filosofo [%d] não conseguiu pegar os garfos.", filosofo->id);
+            tempo = (1 + rand() % 11);
+            sleep(tempo);
         }
         
     }
@@ -67,7 +71,6 @@ int main(int argc, char** argv) {
 
     for (i=0; i < quantFilosofo; i++){
         filosofos[i].id = i+1;
-        filosofos[i].quantIngerida = 0;
         filosofos[i].capacidadeMaxima = capacidadeMaxima;
         filosofos[i].garfoEsquerdo = &(garfos[i]);      
         filosofos[i].garfoDireito = &(garfos[(i+1)%quantGarfos]);      
