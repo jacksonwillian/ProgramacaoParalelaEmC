@@ -4,6 +4,8 @@
 #include<stdlib.h>
 #include <unistd.h>
 
+#define BLOQUEADO 0
+
 typedef struct {
     pthread_t thread;
     int id;
@@ -17,22 +19,36 @@ void* f_jantar (void* argumento) {
 
     filosofo_t *filosofo = (filosofo_t *)argumento;
     int quantIngerida = 0;
-    int tempo = 0;
+    int garfoEsquerdo = 0;
+    int garfoDireito = 0;
 
-    while (quantIngerida < filosofo->capacidadeMaxima){
+    while (quantIngerida < filosofo->capacidadeMaxima) {
+
         printf("\nFilosofo [%d] estah pensando...", filosofo->id);
-        if (sem_trywait(filosofo->garfoEsquerdo) == 0 && sem_trywait(filosofo->garfoDireito) == 0){
+
+        sleep(rand() % 10);
+
+        // Se sem_trywait executou com sucesso a operacao de bloqueio do semaforo, entao retorna zero.
+        // Senao retorna um valor -1 e o estado do semáforo fica inalterado.
+        garfoEsquerdo = sem_trywait(filosofo->garfoEsquerdo);
+        garfoDireito = sem_trywait(filosofo->garfoDireito);
+        
+        if (garfoEsquerdo == BLOQUEADO && garfoDireito == BLOQUEADO){
             printf("\nFilosofo [%d] estah comendo pela %dª vez.", filosofo->id, (quantIngerida + 1));
             quantIngerida += 1;
-            sem_post(filosofo->garfoEsquerdo);
-            sem_post(filosofo->garfoDireito);
-            tempo = (1 + rand() % 21);
-            sleep(tempo);
         } else {
             printf("\nOoops! O Filosofo [%d] não conseguiu pegar os garfos.", filosofo->id);
-            tempo = (1 + rand() % 11);
-            sleep(tempo);
         }
+
+        // Se o semaforo esquerdo foi bloqueado, entao ele eh liberado
+        if (garfoEsquerdo == BLOQUEADO) {
+            sem_post(filosofo->garfoEsquerdo);
+        }
+
+        // Se o semaforo direito foi bloqueado, entao ele eh liberado
+        if (garfoDireito == BLOQUEADO) {
+            sem_post(filosofo->garfoDireito);
+        }        
         
     }
     printf("\nFilosofo [%d] estah satisfeito e foi embora.", filosofo->id);
@@ -51,6 +67,8 @@ int main(int argc, char** argv) {
     /* VALIDACAO DE ENTRADAS */
     if ( argc != 3 ) {
         printf("\nQuantidades de argumentos são inválidos!\n");
+        printf("\nArgumento 1 eh a quantidade total de filosofos");
+        printf("\nArgumento 2 eh a quantidade maxima que cada um pode comer\n");
         return -1;
     } else if ( atoi(argv[1]) < 2 ||  0 == atoi(argv[2]) ) {
         printf("\nValores de argumentos são inválidos!\n");
