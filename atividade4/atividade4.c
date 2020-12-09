@@ -21,12 +21,13 @@ void* f_jantar (void* argumento) {
     int quantIngerida = 0;
     int garfoEsquerdo = 0;
     int garfoDireito = 0;
+    int tempo = 0;
 
     while (quantIngerida < filosofo->capacidadeMaxima) {
 
         printf("\nFilosofo [%d] estah pensando...", filosofo->id);
 
-        sleep(rand() % 10);
+        sleep(tempo + rand() % 5);
 
         // Se sem_trywait executou com sucesso a operacao de bloqueio do semaforo, entao retorna zero.
         // Senao retorna um valor -1 e o estado do semáforo fica inalterado.
@@ -36,8 +37,10 @@ void* f_jantar (void* argumento) {
         if (garfoEsquerdo == BLOQUEADO && garfoDireito == BLOQUEADO){
             printf("\nFilosofo [%d] estah comendo pela %dª vez.", filosofo->id, (quantIngerida + 1));
             quantIngerida += 1;
+            tempo = 5; // atribui tempo de esperar maior
         } else {
             printf("\nOoops! O Filosofo [%d] não conseguiu pegar os garfos.", filosofo->id);
+            tempo = 0;
         }
 
         // Se o semaforo esquerdo foi bloqueado, entao ele eh liberado
