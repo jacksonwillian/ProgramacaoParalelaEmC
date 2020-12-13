@@ -91,7 +91,7 @@ void* f_laboratorio (void* argumento) {
         if (continuarOperando == TRUE) {
             printf("\nLABORATORIO ID [%d] estah aguardando...\n", laboratorio->id);
             while ( pthread_cond_wait (laboratorio->condicionalLaboratorio, laboratorio->bancadaMutex) != 0 );
-            printf("\nLABORATORIO ID [%d] recebeu um sinal...\n", laboratorio->id);
+
         }
                      
         pthread_mutex_unlock(laboratorio->bancadaMutex);
@@ -155,7 +155,7 @@ void* f_infectado (void* argumento) {
 
         if (quantInsumoFaltante == 0) {
 
-                    k = 0;
+            k = 0;
             while (k < QUANT_LABORATORIOS) {
 
                 if ( infectado->bancada[i].virus > 0 && infectado->repositorio.virus == 0 ) {
@@ -189,10 +189,6 @@ void* f_infectado (void* argumento) {
 
             printf("\nINFECTADO [%d] << CONSUMIU >> \n", infectado->id);
 
-            if ( *(infectado->infectadoAguardando) == QUANT_INFECTADOS) {
-                pthread_cond_broadcast(infectado->condicionalLaboratorio);
-            }
-
         } else { 
             pthread_cond_broadcast(infectado->condicionalLaboratorio);
             printf("\nINFECTADO [%d]  << NAO CONSUMIU, ENTAO SOLICITOU REPOSICAO DE INSUMOS >> \n", infectado->id);
@@ -207,7 +203,12 @@ void* f_infectado (void* argumento) {
     
         if (continuarOperando == TRUE) {
             *(infectado->infectadoAguardando) += 1; 
-            *(infectado->infectadoAguardando) = *(infectado->infectadoAguardando) % QUANT_INFECTADOS;
+            
+            if ( *(infectado->infectadoAguardando) == (QUANT_INFECTADOS - 1)) {
+                *(infectado->infectadoAguardando) = 0;
+                pthread_cond_broadcast(infectado->condicionalLaboratorio);
+                printf("\nINFECTADO [%d]  << SOLICITOU REPOSICAO DE INSUMOS >> \n", infectado->id);
+            }
             printf("\nINFECTADO ID [%d] estah aguardando...\n", infectado->id);
             while ( pthread_cond_wait (infectado->condicionalInfectado, infectado->bancadaMutex) != 0 );
             printf("\nINFECTADO ID [%d] recebeu um sinal...\n", infectado->id);
