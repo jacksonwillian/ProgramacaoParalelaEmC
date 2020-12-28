@@ -63,6 +63,7 @@ void* f_laboratorio (void* argumento) {
         * IMPRIME A BANCADA DO LABORATÓRIO
         */
 
+        printf("\n");
         // vai para posição do vírus e imprime
         posicao = laboratorio->indiceInicial;
         if (laboratorio->bancada[posicao] == -1 ) {
@@ -108,18 +109,42 @@ void* f_infectado (void* argumento) {
     int totalEstoque = 0;
     int i = 0;
     int k = 0;
+    int posicao = 0;
     int continuarOperando = TRUE;
     
-    printf("\nINFECTADO ID [%d]\n", infectado->id); 
+    printf("\n~INF[%d] diz: 'cheguei!'\n", infectado->id); 
 
     while (continuarOperando == TRUE) {
         
 
-        // // consumir em par
+        // consumir em par
 
         pthread_mutex_lock(infectado->bancadaMutex);
-        printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d não produz vírus'\n", laboratorio->id, posicao, laboratorio->id);
- 
+
+        printf("\n");
+        // imprime virus na bolsa
+        posicao = 0;
+        if (infectado->bolsa[posicao] == -1) {
+            printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há infinitos vírus'\n", infectado->id, posicao+1, infectado->id);
+        } else {
+            printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há %d vírus'\n", infectado->id, posicao+1, infectado->id, infectado->bolsa[posicao]);
+        }
+        // imprime injecao na bolsa
+        posicao++;
+        if (infectado->bolsa[posicao] == -1) {
+            printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há infinitos injeção'\n", infectado->id, posicao+1, infectado->id);
+        } else {
+            printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há %d injeção'\n", infectado->id, posicao+1, infectado->id, infectado->bolsa[posicao]);
+        }
+        // imprime elementoX na bolsa
+        posicao++;
+        if (infectado->bolsa[posicao] == -1) {
+            printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há infinitos elementoX'\n", infectado->id, posicao+1, infectado->id);
+        } else {
+            printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há %d elementoX'\n", infectado->id, posicao+1, infectado->id, infectado->bolsa[posicao]);
+        }
+        printf("\n");
+
         pthread_mutex_unlock(infectado->bancadaMutex);
     
         sleep( 10 + rand() % 20);
@@ -130,7 +155,8 @@ void* f_infectado (void* argumento) {
 
     pthread_cond_broadcast(infectado->condicionalLaboratorio);
 
-    return NULL;}
+    return NULL;
+    }
 
 
 
@@ -212,15 +238,11 @@ int main(int argc, char** argv) {
         infectados[i].condicionalLaboratorio = &condicionalLaboratorio;        
 
         /* INICIALIZA REPOSITORIO */
-        
-        
-
-        /* INICIALIZA REPOSITORIO */
         for(int k=0; k < TAMANHO_REPOSITORIO; k++) {
-            if (k == posicaoInsumoIndisponivel) {
-                infectados[i].bolsa[i+k] = INSUMO_INDISPONIVEL;
+            if (k == posicaoInsumoInfinito) {
+                infectados[i].bolsa[k] = INSUMO_INFINITO;
             } else {
-                infectados[i].bolsa[i+k] = 0;
+                infectados[i].bolsa[k] = 0;
             }
         }
 
