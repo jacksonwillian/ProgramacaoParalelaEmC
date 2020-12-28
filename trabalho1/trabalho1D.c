@@ -12,42 +12,34 @@
 #define TAMANHO_REPOSITORIO 3
 
 #define INSUMO_INFINITO -1
-#define INSUMO_INDISPONIVEL -1 
+#define INSUMO_INDISPONIVEL -1
 
-
-typedef struct {
-    int virus;
-    int injecao;
-    int elementoSecreto;
-} repositorio_t;
+#define VIRUS 1
+#define INJECAO 2
+#define ELEMENTOX 3
 
 
 typedef struct {
     pthread_t thread;
     int id;  
-    repositorio_t *repositorio;
-    int ciclosMinimos;                      // quantidade minima de ciclos de producao
-    int *atingiramObjetivo;                 // total que atingiram a quantidade minima de ciclos  
-    sem_t *objetivoMutex;           
+    int *bancada;
+    int indiceInicial;
+    int ciclosMinimos;                              
     pthread_mutex_t *bancadaMutex;             
     pthread_cond_t *condicionalLaboratorio;
-    pthread_cond_t *condicionalInfectado;                
 } laboratorio_t;
 
 
 typedef struct {
     pthread_t thread;
     int id;
-    repositorio_t repositorio;
-    repositorio_t *bancada;                 // referencia para os repositorios dos laboratorios
-    int ciclosMinimos;                      // quantidade minima de ciclos de consumo
-    int *atingiramObjetivo;                 // total que atingiram a quantidade minima de ciclos 
-    sem_t *objetivoMutex;
+    int *bancada;                 
+    int bolsa[TAMANHO_REPOSITORIO];
+    int ciclosMinimos;                      
     pthread_mutex_t *bancadaMutex;    
     pthread_cond_t *condicionalLaboratorio;    
-    pthread_cond_t *condicionalInfectado;
-    int *infectadoAguardando;    
-} infectado_t;
+} infectado_t; // obs.: poderia guardar o valor do item ele ja tem
+
 
 
 
@@ -59,52 +51,48 @@ void* f_laboratorio (void* argumento) {
     int ciclosAtualProducao = 0;
     int quantEmEstoque = 0;
     int continuarOperando = TRUE;
-    
-    printf("\nLAB[%d] Diz: 'Acabei de abrir!'\n", laboratorio->id); 
+    int posicao=0;
+
+    printf("\n#LAB[%d] diz: 'Abri!'\n", laboratorio->id); 
 
     while (continuarOperando == TRUE) {
 
         pthread_mutex_lock(laboratorio->bancadaMutex);
 
-        quantEmEstoque = 0;
+        /*
+        * IMPRIME A BANCADA DO LABORATÓRIO
+        */
 
-        if (laboratorio->repositorio->virus != INSUMO_INDISPONIVEL) quantEmEstoque += laboratorio->repositorio->virus;
-        if (laboratorio->repositorio->injecao != INSUMO_INDISPONIVEL) quantEmEstoque += laboratorio->repositorio->injecao;
-        if (laboratorio->repositorio->elementoSecreto != INSUMO_INDISPONIVEL) quantEmEstoque += laboratorio->repositorio->elementoSecreto;
-
-        printf("\nLAB[%d] DIZ: 'Ha %d item em estoque!!!'\n", laboratorio->id, quantEmEstoque);
-        
-        if (quantEmEstoque == 0) {
-            if (laboratorio->repositorio->virus != INSUMO_INDISPONIVEL) laboratorio->repositorio->virus = 1;
-            if (laboratorio->repositorio->injecao != INSUMO_INDISPONIVEL) laboratorio->repositorio->injecao = 1;
-            if (laboratorio->repositorio->elementoSecreto != INSUMO_INDISPONIVEL) laboratorio->repositorio->elementoSecreto = 1;
-
-            ciclosAtualProducao += 1; 
-
-            if (ciclosAtualProducao == laboratorio->ciclosMinimos) *(laboratorio->atingiramObjetivo) += 1; 
-           
-            pthread_cond_broadcast(laboratorio->condicionalInfectado);
-
-            printf("\nLAB[%d] DIZ: 'Renovei o estoque!!!\n' \n", laboratorio->id);
+        // vai para posição do vírus e imprime
+        posicao = laboratorio->indiceInicial;
+        if (laboratorio->bancada[posicao] == -1 ) {
+            printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d não produz vírus'\n", laboratorio->id, posicao, laboratorio->id);
+        } else {
+            printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d há %d vírus'\n", laboratorio->id, posicao, laboratorio->id, laboratorio->bancada[posicao]);
+        }     
+        // vai para posição do injecao e imprime       
+        posicao++; 
+        if (laboratorio->bancada[posicao] == -1 ) {
+            printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d não produz injeção'\n", laboratorio->id, posicao,laboratorio->id);
+        } else {
+            printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d há %d injeção'\n", laboratorio->id, posicao, laboratorio->id, laboratorio->bancada[posicao]);
         }
-        
-        if (*(laboratorio->atingiramObjetivo) == (QUANT_LABORATORIOS + QUANT_INFECTADOS)) continuarOperando = FALSE;
-
-        if (continuarOperando == TRUE) {
-            printf("\nLAB[%d] Diz: 'estou aguardando...'\n", laboratorio->id);
-            while ( pthread_cond_wait (laboratorio->condicionalLaboratorio, laboratorio->bancadaMutex) != 0 );
-
+        // vai para posição do elementoX e imprime
+        posicao++; 
+        if (laboratorio->bancada[posicao] == -1 ) {
+            printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d não produz elementoX'\n", laboratorio->id, posicao,laboratorio->id);
+        } else {
+            printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d há %d elementoX'\n", laboratorio->id, posicao, laboratorio->id, laboratorio->bancada[posicao]);
         }
-                     
+        printf("\n");
+    
         pthread_mutex_unlock(laboratorio->bancadaMutex);
     
-        sleep(rand() % 5);
+        sleep(10 + rand() % 20);
 
     }
     
     printf("\nLAB[%d] Diz: 'Acabei de fechar :('\n", laboratorio->id);
-
-    pthread_cond_broadcast(laboratorio->condicionalInfectado);
 
     return NULL;
 }
@@ -130,89 +118,11 @@ void* f_infectado (void* argumento) {
         // // consumir em par
 
         pthread_mutex_lock(infectado->bancadaMutex);
-        
-        quantInsumoFaltante = 2;
-
-        i = rand() % QUANT_LABORATORIOS;
-        k = 0;        
-
-        // // verifica se tem como consumir
-        while (quantInsumoFaltante > 0 &&  k < QUANT_LABORATORIOS) {
-            totalEstoque = 0;
-            if  (infectado->bancada[i].virus != INSUMO_INDISPONIVEL) totalEstoque += 1; 
-            if  (infectado->bancada[i].injecao != INSUMO_INDISPONIVEL) totalEstoque += 1; 
-            if  (infectado->bancada[i].elementoSecreto != INSUMO_INDISPONIVEL) totalEstoque += 1; 
-
-            printf("\n ESTOQUE TOTAL DE LAB[%d] => %d\n", i+1, totalEstoque);
-
-
-            if ( infectado->bancada[i].virus > 0 && infectado->repositorio.virus == 0 ) {
-                quantInsumoFaltante -= 1;
-                infectado->bancada[i].virus = 0;
-                infectado->repositorio.virus += 1; 
-            }
-
-            if ( infectado->bancada[i].injecao > 0 && infectado->repositorio.injecao == 0 ) {
-                quantInsumoFaltante -= 1;
-                infectado->bancada[i].injecao = 0;
-                infectado->repositorio.injecao += 1;                
-                totalEstoque -= 1;
-            }
-
-            if ( infectado->bancada[i].elementoSecreto > 0 && infectado->repositorio.elementoSecreto == 0 ) {
-                quantInsumoFaltante -= 1;
-                infectado->bancada[i].elementoSecreto = 0;
-                infectado->repositorio.elementoSecreto += 1;                
-                totalEstoque -= 1;
-            }    
-
-
-            if (totalEstoque == 0) {
-                printf("\nINFECTADO [%d] CONSUMI, E AGORA LAB[%d] Ta sem insumo\n", infectado->id, i);
-                pthread_cond_broadcast(infectado->condicionalLaboratorio);                
-            }  
-
-            if (quantInsumoFaltante == 0) {
-                if (infectado->repositorio.virus != INSUMO_INFINITO) infectado->repositorio.virus = 0;
-                if (infectado->repositorio.injecao != INSUMO_INFINITO) infectado->repositorio.injecao = 0;
-                if (infectado->repositorio.elementoSecreto != INSUMO_INFINITO) infectado->repositorio.elementoSecreto = 0;
-
-                ciclosAtualConsumo += 1;
-
-                printf("\nINFECTADO [%d] << CONSUMI TUDO QUE EU QUERIA >> \n", infectado->id);                
-            }
-
-            i += 1;
-            i = i % QUANT_LABORATORIOS; 
-            k += 1;
-        }
-        
-
-        if (quantInsumoFaltante != 0) {
-            printf("\nINFECTADO [%d] << NAOO CONSUMIU >> \n", infectado->id);                
-        }        
-
-        // if (ciclosAtualConsumo == infectado->ciclosMinimos) *(infectado->atingiramObjetivo) += 1; 
-        
-        // if (*(infectado->atingiramObjetivo) == (QUANT_LABORATORIOS + QUANT_INFECTADOS)) continuarOperando = FALSE;    
-    
-    
-        // if (continuarOperando == TRUE) {
-        //     *(infectado->infectadoAguardando) += 1; 
-            
-        //     if ( *(infectado->infectadoAguardando) == (QUANT_INFECTADOS - 1)) {
-        //         *(infectado->infectadoAguardando) = 0;
-        //         pthread_cond_broadcast(infectado->condicionalLaboratorio);
-        //         printf("\nINFECTADO [%d]  << SOLICITOU REPOSICAO DE INSUMOS >> \n", infectado->id);
-        //     }
-        //     printf("\nINFECTADO ID [%d] estah aguardando...\n", infectado->id);
-        //     while ( pthread_cond_wait (infectado->condicionalInfectado, infectado->bancadaMutex) != 0 );
-        //     printf("\nINFECTADO ID [%d] recebeu um sinal...\n", infectado->id);
-        // }
-                     
+        printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d não produz vírus'\n", laboratorio->id, posicao, laboratorio->id);
+ 
         pthread_mutex_unlock(infectado->bancadaMutex);
     
-        sleep(rand() % 30);
+        sleep( 10 + rand() % 20);
 
     }
     
@@ -227,8 +137,8 @@ void* f_infectado (void* argumento) {
 int main(int argc, char** argv) {
 
     /* DECLARACAO DAS VARIAVEIS */
-    int i, ciclosMinimos, atigiramObjetivo, infectadoAguardando, posicaoInsumoInfinito, posicaoInsumoIndisponivel;
-    repositorio_t *bancada;
+    int i, tamVetor, ciclosMinimos, atigiramObjetivo, infectadoAguardando, posicaoInsumoInfinito, posicaoInsumoIndisponivel;
+    int *bancada;
     laboratorio_t *laboratorios;
     infectado_t *infectados;
     sem_t objetivoMutex;
@@ -254,8 +164,11 @@ int main(int argc, char** argv) {
     posicaoInsumoIndisponivel = 0;
     posicaoInsumoInfinito = 0;
     laboratorios = malloc(sizeof(laboratorio_t) * QUANT_LABORATORIOS);
-    bancada = malloc(sizeof(repositorio_t) * QUANT_LABORATORIOS);
+    tamVetor = ( TAMANHO_REPOSITORIO * QUANT_LABORATORIOS) + 1;
+    printf("\nº%d\n", tamVetor);
+    bancada =  malloc(sizeof(int) * tamVetor);                // inicializa todos vetor com valor zero
     infectados = malloc(sizeof(infectado_t) * QUANT_INFECTADOS);
+    bancada[0] = tamVetor;                                  // Inicializa a primeira posicao do vetor
     sem_init(&objetivoMutex, 0, 1);
     pthread_mutex_init(&bancadaMutex, NULL);
     pthread_cond_init(&condicionalLaboratorio, NULL);
@@ -263,31 +176,29 @@ int main(int argc, char** argv) {
 
 
     /* INICIALIZA LABORATORIOS */
+    // for (posicao=1; i < tamVetor; posicao= i + TAMANHO_REPOSITORIO){
+    int posicaoInsumo = 1;
     for (i=0; i < QUANT_LABORATORIOS; i++){
 
         laboratorios[i].id = i+1;
-        laboratorios[i].repositorio = &(bancada[i]);
+        laboratorios[i].bancada = bancada;
+        laboratorios[i].indiceInicial = posicaoInsumo;
         laboratorios[i].ciclosMinimos = ciclosMinimos;
-        laboratorios[i].atingiramObjetivo = &atigiramObjetivo;
-        laboratorios[i].objetivoMutex = &objetivoMutex;
         laboratorios[i].bancadaMutex = &bancadaMutex;
         laboratorios[i].condicionalLaboratorio = &condicionalLaboratorio;        
-        laboratorios[i].condicionalInfectado = &condicionalInfectado;      
 
         /* INICIALIZA REPOSITORIO */
-        bancada[i].virus = (posicaoInsumoIndisponivel == 0) ? INSUMO_INDISPONIVEL : 1;
-        bancada[i].injecao = (posicaoInsumoIndisponivel == 1) ? INSUMO_INDISPONIVEL : 1;
-        bancada[i].elementoSecreto = (posicaoInsumoIndisponivel == 2) ? INSUMO_INDISPONIVEL : 1;        
+        for(int k=0; k < TAMANHO_REPOSITORIO; k++) {
+            if (k == posicaoInsumoIndisponivel) {
+                bancada[posicaoInsumo] = INSUMO_INDISPONIVEL;
+            } else {
+                bancada[posicaoInsumo] = 1;
+            }
+            posicaoInsumo++;
+        }
 
         posicaoInsumoIndisponivel++;
         posicaoInsumoIndisponivel = posicaoInsumoIndisponivel % TAMANHO_REPOSITORIO;
-
-        /* IMPRIMIR LABORATORIO */
-        printf("\nLABORATORIO ID %d\n", laboratorios[i].id);
-        if (laboratorios[i].repositorio->virus != INSUMO_INDISPONIVEL) printf("Fornece virus\n");
-        if (laboratorios[i].repositorio->injecao != INSUMO_INDISPONIVEL) printf("Fornece injecao\n");
-        if (laboratorios[i].repositorio->elementoSecreto != INSUMO_INDISPONIVEL) printf("Fornece elemento secreto\n");
-
     }
 
 
@@ -295,28 +206,28 @@ int main(int argc, char** argv) {
     /* INICIALIZA INFECTADOS */
     for (i=0; i < QUANT_INFECTADOS; i++){
         infectados[i].id = i+1;
-        infectados[i].bancada = &(bancada[i]);             
-        infectados[i].ciclosMinimos = ciclosMinimos;
-        infectados[i].atingiramObjetivo = &atigiramObjetivo;
-        infectados[i].objetivoMutex = &objetivoMutex;        
+        infectados[i].bancada = bancada;             
+        infectados[i].ciclosMinimos = ciclosMinimos;       
         infectados[i].bancadaMutex = &bancadaMutex;        
         infectados[i].condicionalLaboratorio = &condicionalLaboratorio;        
-        infectados[i].condicionalInfectado = &condicionalInfectado;        
-        infectados[i].infectadoAguardando = &infectadoAguardando;        
 
         /* INICIALIZA REPOSITORIO */
-        infectados[i].repositorio.virus = (posicaoInsumoInfinito == 0) ? INSUMO_INFINITO : 0;
-        infectados[i].repositorio.injecao = (posicaoInsumoInfinito == 1) ? INSUMO_INFINITO : 0;
-        infectados[i].repositorio.elementoSecreto = (posicaoInsumoInfinito == 2) ? INSUMO_INFINITO : 0;
+        
+        
+
+        /* INICIALIZA REPOSITORIO */
+        for(int k=0; k < TAMANHO_REPOSITORIO; k++) {
+            if (k == posicaoInsumoIndisponivel) {
+                infectados[i].bolsa[i+k] = INSUMO_INDISPONIVEL;
+            } else {
+                infectados[i].bolsa[i+k] = 0;
+            }
+        }
+
 
         posicaoInsumoInfinito++;
         posicaoInsumoInfinito = posicaoInsumoInfinito % TAMANHO_REPOSITORIO;
 
-        /* IMPRIMIR INFECTADO */
-        printf("\nINFECTADO ID %d\n", infectados[i].id);
-        if (infectados[i].repositorio.virus == INSUMO_INFINITO) printf("Possui virus\n");
-        if (infectados[i].repositorio.injecao == INSUMO_INFINITO) printf("Possui injecao\n");
-        if (infectados[i].repositorio.elementoSecreto == INSUMO_INFINITO) printf("Possui elemento secreto\n");
     }
 
 

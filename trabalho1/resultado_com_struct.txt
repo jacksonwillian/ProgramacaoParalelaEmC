@@ -1,0 +1,96 @@
+LABORATORIO ID 1
+Fornece injecao
+Fornece elemento secreto
+
+LABORATORIO ID 2
+Fornece virus
+Fornece elemento secreto
+
+LABORATORIO ID 3
+Fornece virus
+Fornece injecao
+
+INFECTADO ID 1
+Possui virus
+
+INFECTADO ID 2
+Possui injecao
+
+INFECTADO ID 3
+Possui elemento secreto
+
+LAB[1] Diz: 'Abri!'
+
+#LAB[1] DIZ: 'Ha 2 item em estoque!!!'
+
+#LAB[1] Diz: 'estou aguardando...'
+
+LAB[3] Diz: 'Abri!'
+
+#LAB[3] DIZ: 'Ha 2 item em estoque!!!'
+
+#LAB[3] Diz: 'estou aguardando...'
+
+LAB[2] Diz: 'Abri!'
+
+#LAB[2] DIZ: 'Ha 2 item em estoque!!!'
+
+#LAB[2] Diz: 'estou aguardando...'
+
+INFECTADO ID [3]
+
+~INFEC[3] Diz: 'LAB[2] tem em estoque 273 item
+
+~INFEC[3] Diz: 'consumi injecao de LAB[2]'
+
+~INFEC[3] Diz: 'LAB[3] tem em estoque -1553787356 item
+
+~INFEC[3] Diz: 'LAB[1] tem em estoque 2 item
+
+~INFEC[3] Diz: 'consumi virus de LAB[1]'
+
+INFECTADO [3] << CONSUMI TUDO QUE EU QUERIA >> 
+
+INFECTADO ID [2]
+
+~INFEC[2] Diz: 'LAB[1] tem em estoque 2 item
+
+~INFEC[2] Diz: 'consumi virus de LAB[1]'
+
+~INFEC[2] Diz: 'consumi elemento secreto de LAB[1]'
+
+INFECTADO [2] << CONSUMI TUDO QUE EU QUERIA >> 
+
+INFECTADO ID [1]
+
+~INFEC[1] Diz: 'LAB[3] tem em estoque 1 item
+
+~INFEC[1] Diz: 'consumi injecao de LAB[3]'
+
+INFECTADO [1] CONSUMI, E AGORA LAB[3] Ta sem insumo
+
+~INFEC[1] Diz: 'LAB[1] tem em estoque 2 item
+
+~INFEC[1] Diz: 'consumi elemento secreto de LAB[1]'
+
+INFECTADO [1] << CONSUMI TUDO QUE EU QUERIA >> 
+
+#LAB[1] DIZ: 'Ha 1 item em estoque!!!'
+
+#LAB[1] Diz: 'estou aguardando...'
+
+#LAB[2] DIZ: 'Ha 0 item em estoque!!!'
+
+#LAB[2] DIZ: 'Renovei o estoque!!!'
+
+#LAB[2] DIZ: 'Ha 2 item em estoque!!!'
+
+#LAB[2] Diz: 'estou aguardando...'
+
+#LAB[3] DIZ: 'Ha 0 item em estoque!!!'
+
+#LAB[3] DIZ: 'Renovei o estoque!!!'
+
+#LAB[3] DIZ: 'Ha 2 item em estoque!!!'
+
+#LAB[3] Diz: 'estou aguardando...'
