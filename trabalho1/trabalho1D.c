@@ -41,7 +41,81 @@ typedef struct {
 } infectado_t; // obs.: poderia guardar o valor do item ele ja tem
 
 
+int falta_insumo(int * bancada, int posicao) {
 
+    int totalFaltante = 0;
+
+    if (bancada[posicao] == 0) {
+        totalFaltante += 1;
+    }
+
+    posicao++;
+    if (bancada[posicao] == 0) {
+        totalFaltante += 1;
+    }
+
+    posicao++;
+    if (bancada[posicao] == 0) {
+        totalFaltante += 1;
+    }
+
+    return (totalFaltante == 2) ? 1 : 0;
+} 
+
+
+
+void mostra_bancada(int * bancada, int labID, int posicaoInicialBancada) {
+
+    // vai para posição do vírus e imprime
+    int posicao = posicaoInicialBancada;
+    if (bancada[posicao] == -1 ) {
+        printf("\n#LAB[%d] diz: 'Na posição=%d da bancada nº%d não produz vírus'\n", labID, posicao, labID);
+    } else {
+        printf("\n#LAB[%d] diz: 'Na posição=%d da bancada nº%d há %d vírus'\n", labID, posicao, labID, bancada[posicao]);
+    }     
+    // vai para posição do injecao e imprime       
+    posicao++; 
+    if (bancada[posicao] == -1 ) {
+        printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d não produz injeção'\n", labID, posicao,labID);
+    } else {
+        printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d há %d injeção'\n", labID, posicao, labID, bancada[posicao]);
+    }
+    // vai para posição do elementoX e imprime
+    posicao++; 
+    if (bancada[posicao] == -1 ) {
+        printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d não produz elementoX'\n\n", labID, posicao,labID);
+    } else {
+        printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d há %d elementoX'\n\n", labID, posicao, labID, bancada[posicao]);
+    }
+
+}
+
+
+void mostra_bolsa(int * bolsa, int infID) {
+
+    // imprime virus na bolsa
+    int posicao = 0;
+    if (bolsa[posicao] == -1) {
+        printf("\n~INF[%d] diz: 'Na posição=%d da bolsa nº%d há infinitos vírus'\n", infID, posicao+1, infID);
+    } else {
+        printf("\n~INF[%d] diz: 'Na posição=%d da bolsa nº%d há %d vírus'\n", infID, posicao+1, infID, bolsa[posicao]);
+    }
+    // imprime injecao na bolsa
+    posicao++;
+    if (bolsa[posicao] == -1) {
+        printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há infinitos injeção'\n", infID, posicao+1, infID);
+    } else {
+        printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há %d injeção'\n", infID, posicao+1, infID, bolsa[posicao]);
+    }
+    // imprime elementoX na bolsa
+    posicao++;
+    if (bolsa[posicao] == -1) {
+        printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há infinitos elementoX'\n\n", infID, posicao+1, infID);
+    } else {
+        printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há %d elementoX'\n\n", infID, posicao+1, infID, bolsa[posicao]);
+    }
+
+}
 
 // Permite que os laboratorios produzam os insumos
 void* f_laboratorio (void* argumento) {
@@ -63,30 +137,9 @@ void* f_laboratorio (void* argumento) {
         * IMPRIME A BANCADA DO LABORATÓRIO
         */
 
-        printf("\n");
-        // vai para posição do vírus e imprime
-        posicao = laboratorio->indiceInicial;
-        if (laboratorio->bancada[posicao] == -1 ) {
-            printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d não produz vírus'\n", laboratorio->id, posicao, laboratorio->id);
-        } else {
-            printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d há %d vírus'\n", laboratorio->id, posicao, laboratorio->id, laboratorio->bancada[posicao]);
-        }     
-        // vai para posição do injecao e imprime       
-        posicao++; 
-        if (laboratorio->bancada[posicao] == -1 ) {
-            printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d não produz injeção'\n", laboratorio->id, posicao,laboratorio->id);
-        } else {
-            printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d há %d injeção'\n", laboratorio->id, posicao, laboratorio->id, laboratorio->bancada[posicao]);
-        }
-        // vai para posição do elementoX e imprime
-        posicao++; 
-        if (laboratorio->bancada[posicao] == -1 ) {
-            printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d não produz elementoX'\n", laboratorio->id, posicao,laboratorio->id);
-        } else {
-            printf("#LAB[%d] diz: 'Na posição=%d da bancada nº%d há %d elementoX'\n", laboratorio->id, posicao, laboratorio->id, laboratorio->bancada[posicao]);
-        }
-        printf("\n");
-    
+        mostra_bancada(laboratorio->bancada, laboratorio->id, laboratorio->indiceInicial);
+
+
         pthread_mutex_unlock(laboratorio->bancadaMutex);
     
         sleep(10 + rand() % 20);
@@ -121,29 +174,34 @@ void* f_infectado (void* argumento) {
 
         pthread_mutex_lock(infectado->bancadaMutex);
 
-        printf("\n");
-        // imprime virus na bolsa
-        posicao = 0;
-        if (infectado->bolsa[posicao] == -1) {
-            printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há infinitos vírus'\n", infectado->id, posicao+1, infectado->id);
-        } else {
-            printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há %d vírus'\n", infectado->id, posicao+1, infectado->id, infectado->bolsa[posicao]);
+        /*
+        * IMPRIME A BOLSA DO INFECTADO
+        */
+
+        mostra_bolsa(infectado->bolsa, infectado->id);
+
+        i = 1;
+        int contador = 0;
+        int faltaInsumo = 0;
+        int encontrou = 0;
+        int terminou = 0;
+        int idLab = 0;
+        while( encontrou == 0 && terminou == 0) {
+            idLab = (i-1)/TAMANHO_REPOSITORIO;
+            faltaInsumo = falta_insumo(infectado->bancada, i);
+            if (faltaInsumo == 1) {
+                printf("~INF[%d] diz: 'O estoque estah vazio no LAB[%d]'\n", infectado->id, idLab);
+            }
+            i += 3;
+            i = (i > infectado->bancada[0]) ? 1 : i;
+            contador++;
+
+
+            if (contador == ((infectado->bancada[0] - 1)/3)) {
+                terminou = 1;
+            }
+
         }
-        // imprime injecao na bolsa
-        posicao++;
-        if (infectado->bolsa[posicao] == -1) {
-            printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há infinitos injeção'\n", infectado->id, posicao+1, infectado->id);
-        } else {
-            printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há %d injeção'\n", infectado->id, posicao+1, infectado->id, infectado->bolsa[posicao]);
-        }
-        // imprime elementoX na bolsa
-        posicao++;
-        if (infectado->bolsa[posicao] == -1) {
-            printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há infinitos elementoX'\n", infectado->id, posicao+1, infectado->id);
-        } else {
-            printf("~INF[%d] diz: 'Na posição=%d da bolsa nº%d há %d elementoX'\n", infectado->id, posicao+1, infectado->id, infectado->bolsa[posicao]);
-        }
-        printf("\n");
 
         pthread_mutex_unlock(infectado->bancadaMutex);
     
