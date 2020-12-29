@@ -41,6 +41,12 @@ typedef struct {
 } infectado_t; // obs.: poderia guardar o valor do item ele ja tem
 
 
+int gera_multiplo_x(int intervalo_max, int x) {
+    int numero = 0;
+    numero = rand() % intervalo_max;
+    return numero - (numero % x) + 1;
+}
+
 int falta_insumo(int * bancada, int posicao) {
 
     int totalFaltante = 0;
@@ -180,22 +186,23 @@ void* f_infectado (void* argumento) {
 
         mostra_bolsa(infectado->bolsa, infectado->id);
 
-        i = 1;
+        i = gera_multiplo_x(infectado->bancada[0], TAMANHO_REPOSITORIO);
         int contador = 0;
         int faltaInsumo = 0;
         int encontrou = 0;
         int terminou = 0;
         int idLab = 0;
         while( encontrou == 0 && terminou == 0) {
+            i = (i >= (infectado->bancada[0]-1)) ? 1 : i;
+            i = (i == 0) ? 1 : i;
+            printf("\nIFEC INDICE %d\n", i);
             idLab = (i-1)/TAMANHO_REPOSITORIO;
             faltaInsumo = falta_insumo(infectado->bancada, i);
             if (faltaInsumo == 1) {
                 printf("~INF[%d] diz: 'O estoque estah vazio no LAB[%d]'\n", infectado->id, idLab);
             }
             i += 3;
-            i = (i > infectado->bancada[0]) ? 1 : i;
             contador++;
-
 
             if (contador == ((infectado->bancada[0] - 1)/3)) {
                 terminou = 1;
