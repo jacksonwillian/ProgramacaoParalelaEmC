@@ -244,6 +244,13 @@ void* f_infectado (void* argumento) {
 
         }
 
+        if (consumiu == 2) {
+            printf("\n~INF[%d] diz: 'Opa produzi minha vacina'\n", infectado->id);
+            infectado->bolsa[0] = 0;
+            infectado->bolsa[1] = 0;
+            infectado->bolsa[2] = 0;
+        }
+
         printf("\n~INF[%d] diz: 'Terminei o que eu tinha que fazer!'\n", infectado->id); 
 
         pthread_mutex_unlock(infectado->bancadaMutex);
