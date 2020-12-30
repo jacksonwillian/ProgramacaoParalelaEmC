@@ -133,7 +133,7 @@ void* f_laboratorio (void* argumento) {
     int continuarOperando = TRUE;
     int posicao=0;
 
-    printf("\n#LAB[%d] diz: 'Abri!'\n", laboratorio->id); 
+    // printf("\n#LAB[%d] diz: 'Abri!'\n", laboratorio->id); 
 
     while (continuarOperando == TRUE) {
 
@@ -168,10 +168,10 @@ void* f_infectado (void* argumento) {
     int totalEstoque = 0;
     int i = 0;
     int k = 0;
-    int posicao = 0;
     int continuarOperando = TRUE;
+    int tamanhoVetor = 0;
     
-    printf("\n~INF[%d] diz: 'cheguei!'\n", infectado->id); 
+    // printf("\n~INF[%d] diz: 'cheguei!'\n", infectado->id); 
 
     while (continuarOperando == TRUE) {
         
@@ -186,29 +186,65 @@ void* f_infectado (void* argumento) {
 
         mostra_bolsa(infectado->bolsa, infectado->id);
 
-        i = gera_multiplo_x(infectado->bancada[0], TAMANHO_REPOSITORIO);
-        int contador = 0;
+        tamanhoVetor = infectado->bancada[0];
+
+        i = gera_multiplo_x(tamanhoVetor, TAMANHO_REPOSITORIO);
+
+        int totalLaboratoriosVisitados = 0;
         int faltaInsumo = 0;
-        int encontrou = 0;
-        int terminou = 0;
+        int consumiu = 0;
+        int visitouTodosLabs = FALSE;
         int idLab = 0;
-        while( encontrou == 0 && terminou == 0) {
-            i = (i >= (infectado->bancada[0]-1)) ? 1 : i;
+        int posicaoNaBancada = 0;
+
+        printf("\n~INF[%d] diz: 'vou buscar meus insumos!'\n", infectado->id); 
+
+        while( consumiu < 2 && visitouTodosLabs == FALSE) {
+            
+            i = (i >= (tamanhoVetor - 1)) ? 1 : i;
             i = (i == 0) ? 1 : i;
-            printf("\nIFEC INDICE %d\n", i);
-            idLab = (i-1)/TAMANHO_REPOSITORIO;
+            
+            idLab = ((i-1)/TAMANHO_REPOSITORIO) + 1;
+            printf("\n~INF[%d] diz: 'Estou no LAB[%d]'\n", infectado->id, idLab);
+
+            posicaoNaBancada = i;
+            if ( (infectado->bolsa[0] == 0)  &&  infectado->bancada[posicaoNaBancada] > 0) {
+                printf("\n~INF[%d] diz: 'peguei um virus!'\n", infectado->id); 
+                consumiu++;
+                infectado->bancada[posicaoNaBancada] = 0;
+                infectado->bolsa[0] = 1;
+            }
+            posicaoNaBancada++;
+            if ( (infectado->bolsa[1] == 0)  &&  infectado->bancada[posicaoNaBancada] > 0) {
+                printf("\n~INF[%d] diz: 'peguei um injeção!'\n", infectado->id);                 
+                consumiu++;
+                infectado->bancada[posicaoNaBancada] = 0;
+                infectado->bolsa[1] = 1;
+            }
+            posicaoNaBancada++;
+            if ( (infectado->bolsa[2] == 0)  &&  infectado->bancada[posicaoNaBancada] > 0) {
+                printf("\n~INF[%d] diz: 'peguei um elementoX!'\n", infectado->id);                 
+                consumiu++;
+                infectado->bancada[posicaoNaBancada] = 0;
+                infectado->bolsa[2] = 1;
+            }
+
+
             faltaInsumo = falta_insumo(infectado->bancada, i);
             if (faltaInsumo == 1) {
-                printf("~INF[%d] diz: 'O estoque estah vazio no LAB[%d]'\n", infectado->id, idLab);
+                printf("\n~INF[%d] diz: 'O estoque estah vazio no LAB[%d]'\n", infectado->id, idLab);
             }
-            i += 3;
-            contador++;
 
-            if (contador == ((infectado->bancada[0] - 1)/3)) {
-                terminou = 1;
+            i += 3;
+            totalLaboratoriosVisitados++;
+
+            if (totalLaboratoriosVisitados == ((tamanhoVetor - 1)/TAMANHO_REPOSITORIO)) {
+                visitouTodosLabs = TRUE;
             }
 
         }
+
+        printf("\n~INF[%d] diz: 'Terminei o que eu tinha que fazer!'\n", infectado->id); 
 
         pthread_mutex_unlock(infectado->bancadaMutex);
     
@@ -322,7 +358,9 @@ int main(int argc, char** argv) {
     for (i = 0; i < QUANT_LABORATORIOS; i++) {
         pthread_create(&(laboratorios[i].thread), NULL, f_laboratorio, &(laboratorios[i]));
     }
-   
+    
+    sleep(5);
+
     for (i = 0; i < QUANT_INFECTADOS; i++) {
         pthread_create(&(infectados[i].thread), NULL, f_infectado, &(infectados[i]));
     }
