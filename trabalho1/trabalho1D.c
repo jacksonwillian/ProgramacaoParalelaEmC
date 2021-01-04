@@ -246,9 +246,16 @@ void* f_infectado (void* argumento) {
 
         if (consumiu == 2) {
             printf("\n~INF[%d] diz: 'Opa produzi minha vacina'\n", infectado->id);
-            infectado->bolsa[0] = 0;
-            infectado->bolsa[1] = 0;
-            infectado->bolsa[2] = 0;
+            if (infectado->bolsa[0] != INSUMO_INFINITO) {
+                infectado->bolsa[0] = 0;
+            }
+            if (infectado->bolsa[1] != INSUMO_INFINITO) {
+                infectado->bolsa[1] = 0;
+            }
+            if (infectado->bolsa[2] != INSUMO_INFINITO) {
+                infectado->bolsa[2] = 0;
+            }                        
+
         }
 
         printf("\n~INF[%d] diz: 'Terminei o que eu tinha que fazer!'\n", infectado->id); 
