@@ -26,7 +26,7 @@ typedef struct {
     int indiceInicial;
     int ciclosMinimos;                              
     pthread_mutex_t *bancadaMutex;             
-    pthread_cond_t *condicionalLaboratorio;
+    pthread_cond_t *laboratorioCondicional;
 } laboratorio_t;
 
 
@@ -37,7 +37,7 @@ typedef struct {
     int bolsa[TAMANHO_REPOSITORIO];
     int ciclosMinimos;                      
     pthread_mutex_t *bancadaMutex;    
-    pthread_cond_t *condicionalLaboratorio;    
+    pthread_cond_t *laboratorioCondicional;    
 } infectado_t; // obs.: poderia guardar o valor do item ele ja tem
 
 
@@ -137,6 +137,7 @@ void* f_laboratorio (void* argumento) {
 
     while (continuarOperando == TRUE) {
 
+
         pthread_mutex_lock(laboratorio->bancadaMutex);
 
         /*
@@ -145,9 +146,12 @@ void* f_laboratorio (void* argumento) {
 
         mostra_bancada(laboratorio->bancada, laboratorio->id, laboratorio->indiceInicial);
 
+        printf("\n#LAB[%d] diz: 'Vou dar uma pausa, me avise quando os insumos terminarem...'\n", laboratorio->id); 
+        while ( pthread_cond_wait (laboratorio->laboratorioCondicional, laboratorio->bancadaMutex) != 0 );
+        printf("\n#LAB[%d] diz: 'Opa! Acordei, vou repor os insumos.'\n", laboratorio->id); 
 
         pthread_mutex_unlock(laboratorio->bancadaMutex);
-    
+        
         sleep(10 + rand() % 20);
 
     }
@@ -233,6 +237,8 @@ void* f_infectado (void* argumento) {
             faltaInsumo = falta_insumo(infectado->bancada, i);
             if (faltaInsumo == 1) {
                 printf("\n~INF[%d] diz: 'O estoque estah vazio no LAB[%d]'\n", infectado->id, idLab);
+                printf("\n~INF[%d] diz: 'Vou acordar o LAB[%d]'\n", infectado->id, idLab);
+                pthread_cond_signal(&(infectado->laboratorioCondicional[idLab-1]));
             }
 
             i += 3;
@@ -268,8 +274,6 @@ void* f_infectado (void* argumento) {
     
     printf("\nINFECTADO ID [%d] saiu\n", infectado->id);
 
-    pthread_cond_broadcast(infectado->condicionalLaboratorio);
-
     return NULL;
     }
 
@@ -283,8 +287,8 @@ int main(int argc, char** argv) {
     laboratorio_t *laboratorios;
     infectado_t *infectados;
     sem_t objetivoMutex;
+    pthread_cond_t *laboratorioCondicional;
     pthread_mutex_t bancadaMutex;
-    pthread_cond_t condicionalLaboratorio, condicionalInfectado;
 
 
     /* VALIDACAO DE ENTRADAS */
@@ -305,6 +309,7 @@ int main(int argc, char** argv) {
     posicaoInsumoIndisponivel = 0;
     posicaoInsumoInfinito = 0;
     laboratorios = malloc(sizeof(laboratorio_t) * QUANT_LABORATORIOS);
+    laboratorioCondicional = malloc(sizeof(pthread_cond_t) * QUANT_LABORATORIOS);
     tamVetor = ( TAMANHO_REPOSITORIO * QUANT_LABORATORIOS) + 1;
     printf("\nº%d\n", tamVetor);
     bancada =  malloc(sizeof(int) * tamVetor);                // inicializa todos vetor com valor zero
@@ -312,12 +317,16 @@ int main(int argc, char** argv) {
     bancada[0] = tamVetor;                                  // Inicializa a primeira posicao do vetor
     sem_init(&objetivoMutex, 0, 1);
     pthread_mutex_init(&bancadaMutex, NULL);
-    pthread_cond_init(&condicionalLaboratorio, NULL);
-    pthread_cond_init(&condicionalInfectado, NULL);
+
 
 
     /* INICIALIZA LABORATORIOS */
-    // for (posicao=1; i < tamVetor; posicao= i + TAMANHO_REPOSITORIO){
+
+    for (i=0; i < QUANT_LABORATORIOS; i++) {
+            pthread_cond_init(&(laboratorioCondicional[i]), NULL);
+    }
+
+
     int posicaoInsumo = 1;
     for (i=0; i < QUANT_LABORATORIOS; i++){
 
@@ -326,7 +335,7 @@ int main(int argc, char** argv) {
         laboratorios[i].indiceInicial = posicaoInsumo;
         laboratorios[i].ciclosMinimos = ciclosMinimos;
         laboratorios[i].bancadaMutex = &bancadaMutex;
-        laboratorios[i].condicionalLaboratorio = &condicionalLaboratorio;        
+        laboratorios[i].laboratorioCondicional = &(laboratorioCondicional[i]);
 
         /* INICIALIZA REPOSITORIO */
         for(int k=0; k < TAMANHO_REPOSITORIO; k++) {
@@ -349,8 +358,8 @@ int main(int argc, char** argv) {
         infectados[i].id = i+1;
         infectados[i].bancada = bancada;             
         infectados[i].ciclosMinimos = ciclosMinimos;       
-        infectados[i].bancadaMutex = &bancadaMutex;        
-        infectados[i].condicionalLaboratorio = &condicionalLaboratorio;        
+        infectados[i].bancadaMutex = &bancadaMutex;
+        infectados[i].laboratorioCondicional = laboratorioCondicional;
 
         /* INICIALIZA REPOSITORIO */
         for(int k=0; k < TAMANHO_REPOSITORIO; k++) {
