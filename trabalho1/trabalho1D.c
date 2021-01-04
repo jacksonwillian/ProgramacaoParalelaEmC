@@ -96,6 +96,29 @@ void mostra_bancada(int * bancada, int labID, int posicaoInicialBancada) {
 
 }
 
+void repor_bancada(int * bancada, int labID, int posicaoInicialBancada) {
+
+    // vai para posição do vírus e imprime
+    int posicao = posicaoInicialBancada;
+    if (bancada[posicao] != INSUMO_INDISPONIVEL && bancada[posicao] == 0) {
+        bancada[posicao] = 1;
+    }    
+    // vai para posição do injecao e imprime       
+    posicao++; 
+    if (bancada[posicao] != INSUMO_INDISPONIVEL && bancada[posicao] == 0) {
+        bancada[posicao] = 1;
+    }   
+
+    // vai para posição do elementoX e imprime
+    posicao++; 
+    if (bancada[posicao] != INSUMO_INDISPONIVEL && bancada[posicao] == 0) {
+        bancada[posicao] = 1;
+    }   
+    
+    printf("\n#LAB[%d] diz: 'Repus o estoque'\n", labID);
+
+}
+
 
 void mostra_bolsa(int * bolsa, int infID) {
 
@@ -143,6 +166,8 @@ void* f_laboratorio (void* argumento) {
         /*
         * IMPRIME A BANCADA DO LABORATÓRIO
         */
+
+        repor_bancada(laboratorio->bancada, laboratorio->id, laboratorio->indiceInicial);
 
         mostra_bancada(laboratorio->bancada, laboratorio->id, laboratorio->indiceInicial);
 
