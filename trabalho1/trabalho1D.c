@@ -146,6 +146,23 @@ void mostra_bolsa(int * bolsa, int infID) {
 
 }
 
+void esvaziar_bolsa(int * bolsa) {
+
+    // esvazia virus 
+    if (bolsa[0] != INSUMO_INFINITO) {
+        bolsa[0] = 0;
+    }
+    // esvazia injecao 
+    if (bolsa[1] != INSUMO_INFINITO) {
+        bolsa[1] = 0;
+    }
+    // esvazia elementoX 
+    if (bolsa[2] != INSUMO_INFINITO) {
+        bolsa[2] = 0;
+    } 
+
+}
+
 // Permite que os laboratorios produzam os insumos
 void* f_laboratorio (void* argumento) {
 
@@ -177,8 +194,6 @@ void* f_laboratorio (void* argumento) {
 
         pthread_mutex_unlock(laboratorio->bancadaMutex);
         
-        sleep(10 + rand() % 20);
-
     }
     
     printf("\nLAB[%d] Diz: 'Acabei de fechar :('\n", laboratorio->id);
@@ -277,15 +292,12 @@ void* f_infectado (void* argumento) {
 
         if (consumiu == 2) {
             printf("\n~INF[%d] diz: 'Opa produzi minha vacina'\n", infectado->id);
-            if (infectado->bolsa[0] != INSUMO_INFINITO) {
-                infectado->bolsa[0] = 0;
-            }
-            if (infectado->bolsa[1] != INSUMO_INFINITO) {
-                infectado->bolsa[1] = 0;
-            }
-            if (infectado->bolsa[2] != INSUMO_INFINITO) {
-                infectado->bolsa[2] = 0;
-            }                        
+            
+            esvaziar_bolsa(infectado->bolsa);
+                       
+        } else {
+
+            printf("\n~INF[%d] diz: 'Poxa, não produzi minha vacina'\n", infectado->id);
 
         }
 
