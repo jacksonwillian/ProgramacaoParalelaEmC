@@ -18,6 +18,7 @@
 #define INJECAO 2
 #define ELEMENTOX 3
 
+typedef int bool;
 
 typedef struct {
     pthread_t thread;
@@ -49,7 +50,7 @@ int gera_multiplo_x(int intervalo_max, int x) {
     return numero - (numero % x) + 1;
 }
 
-int falta_insumo(int * bancada, int posicao) {
+bool bancada_sem_insumos(int * bancada, int posicao) {
 
     int totalFaltante = 0;
 
@@ -67,7 +68,7 @@ int falta_insumo(int * bancada, int posicao) {
         totalFaltante += 1;
     }
 
-    return (totalFaltante == 2) ? 1 : 0;
+    return (totalFaltante == 2) ? TRUE : FALSE;
 } 
 
 
@@ -148,7 +149,7 @@ void mostra_bolsa(int * bolsa, int infID) {
 
 }
 
-int bolsa_estah_cheia(int * bolsa) {
+bool bolsa_estah_cheia(int * bolsa) {
 
     int total_itens = 0;
 
@@ -165,11 +166,7 @@ int bolsa_estah_cheia(int * bolsa) {
         total_itens++;
     } 
 
-    if (total_itens == 2) {
-        return TRUE;
-    } else {
-        return FALSE;
-    }
+    return (total_itens == 2) ? TRUE : FALSE;
 
 }
 
@@ -197,7 +194,8 @@ void* f_laboratorio (void* argumento) {
 
     int ciclosAtualProducao = 0;
     int quantEmEstoque = 0;
-    int continuarOperando = TRUE;
+    bool continuarOperando = TRUE;
+    bool sem_insumos = FALSE;
     int posicao=0;
 
     // printf("\n#LAB[%d] diz: 'Abri!'\n", laboratorio->id); 
@@ -210,8 +208,11 @@ void* f_laboratorio (void* argumento) {
         /*
         * IMPRIME A BANCADA DO LABORATÓRIO
         */
+        sem_insumos = bancada_sem_insumos(laboratorio->bancada, laboratorio->indiceInicial);
 
-        repor_bancada(laboratorio->bancada, laboratorio->id, laboratorio->indiceInicial);
+        if (sem_insumos == TRUE) {
+            repor_bancada(laboratorio->bancada, laboratorio->id, laboratorio->indiceInicial);
+        }
 
         mostra_bancada(laboratorio->bancada, laboratorio->id, laboratorio->indiceInicial);
 
@@ -220,6 +221,7 @@ void* f_laboratorio (void* argumento) {
         printf("\n#LAB[%d] diz: 'Opa! Acordei, vou repor os insumos.'\n", laboratorio->id); 
 
         pthread_mutex_unlock(laboratorio->bancadaMutex);
+        
         
     }
     
@@ -239,7 +241,7 @@ void* f_infectado (void* argumento) {
     int totalEstoque = 0;
     int i = 0;
     int k = 0;
-    int continuarOperando = TRUE;
+    bool continuarOperando = TRUE;
     int tamanhoVetor = 0;
     
     // printf("\n~INF[%d] diz: 'cheguei!'\n", infectado->id); 
@@ -262,9 +264,9 @@ void* f_infectado (void* argumento) {
         i = gera_multiplo_x(tamanhoVetor, TAMANHO_REPOSITORIO);
 
         int totalLaboratoriosVisitados = 0;
-        int faltaInsumo = 0;
+        bool falta_insumo = FALSE;
         int consumiu = 0;
-        int visitouTodosLabs = FALSE;
+        bool visitouTodosLabs = FALSE;
         int idLab = 0;
         int posicaoNaBancada = 0;
 
@@ -286,7 +288,7 @@ void* f_infectado (void* argumento) {
             }
             posicaoNaBancada++;
             if ( (infectado->bolsa[1] == 0)  &&  infectado->bancada[posicaoNaBancada] > 0) {
-                printf("\n~INF[%d] diz: 'peguei um injeção!'\n", infectado->id);                 
+                printf("\n~INF[%d] diz: 'peguei uma injeção!'\n", infectado->id);                 
                 infectado->bancada[posicaoNaBancada] = 0;
                 infectado->bolsa[1] = 1;
             }
@@ -298,8 +300,8 @@ void* f_infectado (void* argumento) {
             }
 
 
-            faltaInsumo = falta_insumo(infectado->bancada, i);
-            if (faltaInsumo == 1) {
+            falta_insumo = bancada_sem_insumos(infectado->bancada, i);
+            if (falta_insumo == TRUE) {
                 printf("\n~INF[%d] diz: 'O estoque estah vazio no LAB[%d]'\n", infectado->id, idLab);
                 printf("\n~INF[%d] diz: 'Vou acordar o LAB[%d]'\n", infectado->id, idLab);
                 pthread_cond_signal(&(infectado->laboratorioCondicional[idLab-1]));
@@ -326,7 +328,7 @@ void* f_infectado (void* argumento) {
 
                 (*infectado->quantCompletouCiclo)++;
 
-                printf("\n~INF[%d] diz: '$A Compleram ao todo ciclo  %d infectados!'\n", infectado->id, (*infectado->quantCompletouCiclo));
+                printf("\n~INF[%d] diz: '$A Completaram ao todo ciclo  %d infectados!'\n", infectado->id, (*infectado->quantCompletouCiclo));
 
                 (*infectado->quantCompletouCiclo) = 0;
 
@@ -336,7 +338,7 @@ void* f_infectado (void* argumento) {
 
                 (*infectado->quantCompletouCiclo)++;
 
-                printf("\n~INF[%d] diz: '$B Compleram ao todo ciclo  %d infectados!'\n", infectado->id, (*infectado->quantCompletouCiclo));
+                printf("\n~INF[%d] diz: '$B Completaram ao todo ciclo  %d infectados!'\n", infectado->id, (*infectado->quantCompletouCiclo));
 
                 while ( pthread_cond_wait(infectado->infectadoCondicional, infectado->bancadaMutex) != 0 );
 
