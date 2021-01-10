@@ -25,7 +25,9 @@ typedef struct {
     int id;  
     int *bancada;
     int indiceInicial;
-    int ciclosMinimos;                              
+    int ciclosMinimos;
+    int ciclosAtual;
+    int *atingiramObjetivo;                               
     pthread_mutex_t *bancadaMutex;             
     pthread_cond_t *laboratorioCondicional;
 } laboratorio_t;
@@ -37,7 +39,9 @@ typedef struct {
     int *bancada;                 
     int bolsa[TAMANHO_REPOSITORIO];
     int ciclosMinimos;    
-    int *quantCompletouCiclo;                  
+    int ciclosAtual;    
+    int *atingiramObjetivo;                  
+    int *contadorBarreira;                  
     pthread_mutex_t *bancadaMutex;    
     pthread_cond_t *laboratorioCondicional;    
     pthread_cond_t *infectadoCondicional;    
@@ -192,7 +196,6 @@ void* f_laboratorio (void* argumento) {
 
     laboratorio_t *laboratorio = (laboratorio_t *)argumento;
 
-    int ciclosAtualProducao = 0;
     int quantEmEstoque = 0;
     bool continuarOperando = TRUE;
     bool sem_insumos = FALSE;
@@ -212,6 +215,10 @@ void* f_laboratorio (void* argumento) {
 
         if (sem_insumos == TRUE) {
             repor_bancada(laboratorio->bancada, laboratorio->id, laboratorio->indiceInicial);
+            laboratorio->ciclosAtual += 1;
+            if (laboratorio->ciclosAtual == laboratorio->ciclosMinimos) {
+                (*laboratorio->atingiramObjetivo) += 1;
+            }
         }
 
         mostra_bancada(laboratorio->bancada, laboratorio->id, laboratorio->indiceInicial);
@@ -220,12 +227,16 @@ void* f_laboratorio (void* argumento) {
         while ( pthread_cond_wait (laboratorio->laboratorioCondicional, laboratorio->bancadaMutex) != 0 );
         printf("\n#LAB[%d] diz: 'Opa! Acordei, vou repor os insumos.'\n", laboratorio->id); 
 
+        if ( (*laboratorio->atingiramObjetivo) == (QUANT_LABORATORIOS + QUANT_INFECTADOS) ) {
+            continuarOperando = FALSE;    
+        }
+
         pthread_mutex_unlock(laboratorio->bancadaMutex);
         
         
     }
     
-    printf("\nLAB[%d] Diz: 'Acabei de fechar :('\n", laboratorio->id);
+    printf("\n#LAB[%d] Diz: 'Acabei de fechar :('\n", laboratorio->id);
 
     return NULL;
 }
@@ -236,7 +247,6 @@ void* f_infectado (void* argumento) {
 
     infectado_t *infectado = (infectado_t *)argumento;
 
-    int ciclosAtualConsumo = 0;
     int quantInsumoFaltante = 0;
     int totalEstoque = 0;
     int i = 0;
@@ -321,24 +331,30 @@ void* f_infectado (void* argumento) {
             printf("\n~INF[%d] diz: 'Opa produzi minha vacina'\n", infectado->id);
             
             esvaziar_bolsa(infectado->bolsa);
+
+            infectado->ciclosAtual += 1;
+            if (infectado->ciclosAtual == infectado->ciclosMinimos ) {
+                (*infectado->atingiramObjetivo) += 1;
+            }
+
                        
             printf("\n~INF[%d] diz: 'Terminei o que eu tinha que fazer!'\n", infectado->id); 
 
-            if ( *(infectado->quantCompletouCiclo) == (QUANT_INFECTADOS-1) ) {
+            if ( (*infectado->contadorBarreira) == (QUANT_INFECTADOS-1) ) {
 
-                (*infectado->quantCompletouCiclo)++;
+                (*infectado->contadorBarreira)++;
 
-                printf("\n~INF[%d] diz: '$A Completaram ao todo ciclo  %d infectados!'\n", infectado->id, (*infectado->quantCompletouCiclo));
+                printf("\n~INF[%d] diz: '$A Completaram ao todo ciclo  %d infectados!'\n", infectado->id, (*infectado->contadorBarreira));
 
-                (*infectado->quantCompletouCiclo) = 0;
+                (*infectado->contadorBarreira) = 0;
 
                 pthread_cond_broadcast(infectado->infectadoCondicional);
 
             } else {
 
-                (*infectado->quantCompletouCiclo)++;
+                (*infectado->contadorBarreira)++;
 
-                printf("\n~INF[%d] diz: '$B Completaram ao todo ciclo  %d infectados!'\n", infectado->id, (*infectado->quantCompletouCiclo));
+                printf("\n~INF[%d] diz: '$B Completaram ao todo ciclo  %d infectados!'\n", infectado->id, (*infectado->contadorBarreira));
 
                 while ( pthread_cond_wait(infectado->infectadoCondicional, infectado->bancadaMutex) != 0 );
 
@@ -352,13 +368,27 @@ void* f_infectado (void* argumento) {
         }
 
 
+        if ( (*infectado->atingiramObjetivo) == (QUANT_LABORATORIOS + QUANT_INFECTADOS) ) {
+            continuarOperando = FALSE;    
+
+            for (int l = 0; l < QUANT_LABORATORIOS; l++) {
+                pthread_cond_signal(&(infectado->laboratorioCondicional[l]));
+            }
+
+            pthread_cond_broadcast(infectado->infectadoCondicional);
+
+        }        
+
+
         pthread_mutex_unlock(infectado->bancadaMutex);
     
         sleep( 10 + rand() % 20);
 
     }
     
-    printf("\nINFECTADO ID [%d] saiu\n", infectado->id);
+    
+
+    printf("\n~INF[%d] saiu\n", infectado->id);
 
     return NULL;
     }
@@ -368,7 +398,7 @@ void* f_infectado (void* argumento) {
 int main(int argc, char** argv) {
 
     /* DECLARACAO DAS VARIAVEIS */
-    int i, tamVetor, quantCompletouCiclo, ciclosMinimos, atigiramObjetivo, infectadoAguardando, posicaoInsumoInfinito, posicaoInsumoIndisponivel;
+    int i, tamVetor, atingiramObjetivo, ciclosMinimos, contadorBarreira, infectadoAguardando, posicaoInsumoInfinito, posicaoInsumoIndisponivel;
     int *bancada;
     laboratorio_t *laboratorios;
     infectado_t *infectados;
@@ -390,8 +420,8 @@ int main(int argc, char** argv) {
 
     /* INICIALIZACAO DAS VARIAVEIS */    
     ciclosMinimos = atoi(argv[1]);
-    quantCompletouCiclo = 0;
-    atigiramObjetivo = 0;
+    atingiramObjetivo = 0;
+    contadorBarreira = 0;
     infectadoAguardando = 0;
     posicaoInsumoIndisponivel = 0;
     posicaoInsumoInfinito = 0;
@@ -421,6 +451,8 @@ int main(int argc, char** argv) {
         laboratorios[i].bancada = bancada;
         laboratorios[i].indiceInicial = posicaoInsumo;
         laboratorios[i].ciclosMinimos = ciclosMinimos;
+        laboratorios[i].ciclosAtual = 0;
+        laboratorios[i].atingiramObjetivo = &atingiramObjetivo;
         laboratorios[i].bancadaMutex = &bancadaMutex;
         laboratorios[i].laboratorioCondicional = &(laboratorioCondicional[i]);
 
@@ -445,10 +477,12 @@ int main(int argc, char** argv) {
         infectados[i].id = i+1;
         infectados[i].bancada = bancada;             
         infectados[i].ciclosMinimos = ciclosMinimos;       
+        infectados[i].ciclosAtual = 0;       
+        infectados[i].contadorBarreira = &contadorBarreira;       
         infectados[i].bancadaMutex = &bancadaMutex;
         infectados[i].laboratorioCondicional = laboratorioCondicional;
         infectados[i].infectadoCondicional = &infectadoCondicional;
-        infectados[i].quantCompletouCiclo = &quantCompletouCiclo;
+        infectados[i].atingiramObjetivo = &atingiramObjetivo;
 
         /* INICIALIZA REPOSITORIO */
         for(int k=0; k < TAMANHO_REPOSITORIO; k++) {
