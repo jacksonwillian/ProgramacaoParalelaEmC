@@ -47,6 +47,49 @@ typedef struct {
     pthread_cond_t *infectadoCondicional;    
 } infectado_t; // obs.: poderia guardar o valor do item ele ja tem
 
+// int get_insumo_disponivel(int valor){
+
+//     if (valor == -1){
+//         return 0;
+//     }
+//     return valor;
+// }
+
+// void indices_bancada_lab(int * bolsa, int * bancada, int * indLab1, int * indLab2) {
+//     // inicializa indices lab
+//     indLab1 = -1;
+//     indLab2 = -1;
+
+//     int i, total, quant_virus, quant_infectados, quant_elementx;
+
+//     i = 0; // +3
+//     quant_virus = 0;
+//     quant_infectados = 0;
+//     quant_elementx = 0;
+//     total = 0;
+//     totalAnterior = 0;
+
+//     total = get_insumo_disponivel(bancada[(1 + i)]) + get_insumo_disponivel(bancada[(2 + i)]) + get_insumo_disponivel(bancada[(3 + i)]);
+
+//     if ( (bolsa[0] != INSUMO_INFINITO) && (bancada[(1 + i)] != INSUMO_INDISPONIVEL) ) {
+//         quant_virus = bancada[(1 + i)];
+//     }
+    
+//     if ( (bolsa[1] != INSUMO_INFINITO) && (bancada[(2 + i)] != INSUMO_INDISPONIVEL) ) {
+//         quant_infectados = bancada[(2 + i)];
+//     }
+    
+//     if ( (bolsa[2] != INSUMO_INFINITO) && (bancada[(3 + i)] != INSUMO_INDISPONIVEL) ) {
+//         quant_elementx = bancada[(3 + i)];
+//     }
+    
+//     totalAnterior = total;
+
+    
+    
+        
+// }
+
 
 int gera_multiplo_x(int intervalo_max, int x) {
     int numero = 0;
@@ -219,6 +262,8 @@ void* f_laboratorio (void* argumento) {
             if (laboratorio->ciclosAtual == laboratorio->ciclosMinimos) {
                 (*laboratorio->atingiramObjetivo) += 1;
             }
+
+            printf("\n#LAB[%d] Diz: 'ciclo atual %d'\n", laboratorio->id, laboratorio->ciclosAtual);
         }
 
         mostra_bancada(laboratorio->bancada, laboratorio->id, laboratorio->indiceInicial);
@@ -332,11 +377,14 @@ void* f_infectado (void* argumento) {
             
             esvaziar_bolsa(infectado->bolsa);
 
+
             infectado->ciclosAtual += 1;
             if (infectado->ciclosAtual == infectado->ciclosMinimos ) {
                 (*infectado->atingiramObjetivo) += 1;
             }
-
+            
+            // remover depois
+            printf("\n~INF[%d] diz: 'ciclo atual %d'", infectado->id, infectado->ciclosAtual);
                        
             printf("\n~INF[%d] diz: 'Terminei o que eu tinha que fazer!'\n", infectado->id); 
 
@@ -364,7 +412,10 @@ void* f_infectado (void* argumento) {
         } else {
 
             printf("\n~INF[%d] diz: 'Poxa, não produzi minha vacina'\n", infectado->id);
-
+            
+            pthread_cond_broadcast(infectado->infectadoCondicional);
+            
+            printf("\n~INF[%d] diz: 'Acorda cambada'\n", infectado->id);
         }
 
 
@@ -375,8 +426,6 @@ void* f_infectado (void* argumento) {
                 pthread_cond_signal(&(infectado->laboratorioCondicional[l]));
             }
 
-            pthread_cond_broadcast(infectado->infectadoCondicional);
-
         }        
 
 
@@ -386,7 +435,7 @@ void* f_infectado (void* argumento) {
 
     }
     
-    
+    pthread_cond_broadcast(infectado->infectadoCondicional);
 
     printf("\n~INF[%d] saiu\n", infectado->id);
 
