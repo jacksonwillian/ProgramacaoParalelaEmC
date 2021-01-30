@@ -321,6 +321,7 @@ void* f_infectado (void* argumento) {
         int totalLaboratoriosVisitados = 0;
         bool falta_insumo = FALSE;
         int consumiu = 0;
+        bool ja_consumiu = FALSE;
         bool visitouTodosLabs = FALSE;
         int idLab = 0;
         int posicaoNaBancada = 0;
@@ -335,31 +336,36 @@ void* f_infectado (void* argumento) {
             idLab = ((i-1)/TAMANHO_REPOSITORIO) + 1;
             printf("\n~INF[%d] diz: 'Estou no LAB[%d]'\n", infectado->id, idLab);
 
+            ja_consumiu = FALSE;
+
             posicaoNaBancada = i;
-            if ( (infectado->bolsa[0] == 0)  &&  infectado->bancada[posicaoNaBancada] > 0) {
+            if ( (infectado->bolsa[0] == 0)  &&  (infectado->bancada[posicaoNaBancada] > 0) && (ja_consumiu == FALSE)) {
                 printf("\n~INF[%d] diz: 'peguei um virus!'\n", infectado->id); 
                 infectado->bancada[posicaoNaBancada] = 0;
                 infectado->bolsa[0] = 1;
+                ja_consumiu = TRUE;
             }
             posicaoNaBancada++;
-            if ( (infectado->bolsa[1] == 0)  &&  infectado->bancada[posicaoNaBancada] > 0) {
+            if ( (infectado->bolsa[1] == 0)  &&  (infectado->bancada[posicaoNaBancada] > 0) && (ja_consumiu == FALSE)) {
                 printf("\n~INF[%d] diz: 'peguei uma injeção!'\n", infectado->id);                 
                 infectado->bancada[posicaoNaBancada] = 0;
                 infectado->bolsa[1] = 1;
+                ja_consumiu = TRUE;
             }
             posicaoNaBancada++;
-            if ( (infectado->bolsa[2] == 0)  &&  infectado->bancada[posicaoNaBancada] > 0) {
+            if ( (infectado->bolsa[2] == 0)  &&  (infectado->bancada[posicaoNaBancada] > 0) && (ja_consumiu == FALSE)) {
                 printf("\n~INF[%d] diz: 'peguei um elementoX!'\n", infectado->id);                 
                 infectado->bancada[posicaoNaBancada] = 0;
                 infectado->bolsa[2] = 1;
+                ja_consumiu = TRUE;
             }
 
 
             falta_insumo = bancada_sem_insumos(infectado->bancada, i);
             if (falta_insumo == TRUE) {
                 printf("\n~INF[%d] diz: 'O estoque estah vazio no LAB[%d]'\n", infectado->id, idLab);
-                printf("\n~INF[%d] diz: 'Vou acordar o LAB[%d]'\n", infectado->id, idLab);
-                pthread_cond_signal(&(infectado->laboratorioCondicional[idLab-1]));
+                // printf("\n~INF[%d] diz: 'Vou acordar o LAB[%d]'\n", infectado->id, idLab);
+                // pthread_cond_signal(&(infectado->laboratorioCondicional[idLab-1]));
             }
 
             i += 3;
@@ -406,6 +412,8 @@ void* f_infectado (void* argumento) {
 
                 while ( pthread_cond_wait(infectado->infectadoCondicional, infectado->bancadaMutex) != 0 );
 
+                sleep( 10 + rand() % 10);
+
             }
 
         
@@ -413,9 +421,16 @@ void* f_infectado (void* argumento) {
 
             printf("\n~INF[%d] diz: 'Poxa, não produzi minha vacina'\n", infectado->id);
             
-            pthread_cond_broadcast(infectado->infectadoCondicional);
+            // pthread_cond_broadcast(infectado->infectadoCondicional);
             
-            printf("\n~INF[%d] diz: 'Acorda cambada'\n", infectado->id);
+            // printf("\n~INF[%d] diz: 'Acorda cambada'\n", infectado->id);
+
+            printf("\n~INF[%d] diz: 'Vou acordar os LABs\n", infectado->id);
+
+            for (int l = 0; l < QUANT_LABORATORIOS; l++) {
+                pthread_cond_signal(&(infectado->laboratorioCondicional[l]));
+            }
+
         }
 
 
