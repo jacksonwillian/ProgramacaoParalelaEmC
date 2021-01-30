@@ -562,10 +562,12 @@ int main(int argc, char** argv) {
 
     for (i = 0; i < QUANT_LABORATORIOS; i++) {
         pthread_join(laboratorios[i].thread, NULL);
+        printf("\n>>> laboratorio %d: %d", laboratorios[i].id, laboratorios[i].ciclosAtual); 
     }
 
     for (i = 0; i < QUANT_INFECTADOS; i++) {
         pthread_join(infectados[i].thread, NULL);
+         printf("\n>>> infectado %d: %d", infectados[i].id, infectados[i].ciclosAtual); 
     }
 
 
