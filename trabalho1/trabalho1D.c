@@ -401,12 +401,8 @@ void* f_infectado (void* argumento) {
 
                     printf("\n~INF[%d] diz: '$B Completaram ao todo ciclo  %d infectados!'\n", infectado->id, (*infectado->contadorBarreira));
                     
-                    if ( (*infectado->atingiramObjetivo) != (QUANT_LABORATORIOS + QUANT_INFECTADOS) ) {
-                        while ( pthread_cond_wait(infectado->infectadoCondicional, infectado->bancadaMutex) != 0 );
-                    }
-
-
-
+                    while ( pthread_cond_wait(infectado->infectadoCondicional, infectado->bancadaMutex) != 0 );
+                    
                 }
 
             
