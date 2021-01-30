@@ -267,6 +267,7 @@ void* f_infectado (void* argumento) {
     int k = 0;
     bool continuarOperando = TRUE;
     int tamanhoVetor = 0;
+    bool nao_conseguiu_consumir = FALSE;
     
     // printf("\n~INF[%d] diz: 'cheguei!'\n", infectado->id); 
 
@@ -285,6 +286,7 @@ void* f_infectado (void* argumento) {
         bool visitouTodosLabs = FALSE;
         int idLab = 0;
         int posicaoNaBancada = 0;
+        
 
 
 
@@ -367,6 +369,8 @@ void* f_infectado (void* argumento) {
                 
                 esvaziar_bolsa(infectado->bolsa);
 
+                nao_conseguiu_consumir = FALSE;
+
 
                 infectado->ciclosAtual += 1;
                 if (infectado->ciclosAtual == infectado->ciclosMinimos ) {
@@ -412,6 +416,12 @@ void* f_infectado (void* argumento) {
 
                 deve_esperar = TRUE;
 
+                
+                if (nao_conseguiu_consumir == TRUE) {
+                    printf("\n~INF[%d] diz: 'Precisei chamar os outros!'\n", infectado->id);
+                    pthread_cond_broadcast(infectado->infectadoCondicional);
+                }
+                
                 // pthread_cond_broadcast(infectado->infectadoCondicional);
                 
                 // printf("\n~INF[%d] diz: 'Acorda cambada'\n", infectado->id);
@@ -421,6 +431,8 @@ void* f_infectado (void* argumento) {
                 for (int l = 0; l < QUANT_LABORATORIOS; l++) {
                     pthread_cond_signal(&(infectado->laboratorioCondicional[l]));
                 }
+
+                nao_conseguiu_consumir = TRUE;
 
             }
 
