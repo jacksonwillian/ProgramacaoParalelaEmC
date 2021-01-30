@@ -47,49 +47,6 @@ typedef struct {
     pthread_cond_t *infectadoCondicional;    
 } infectado_t; // obs.: poderia guardar o valor do item ele ja tem
 
-// int get_insumo_disponivel(int valor){
-
-//     if (valor == -1){
-//         return 0;
-//     }
-//     return valor;
-// }
-
-// void indices_bancada_lab(int * bolsa, int * bancada, int * indLab1, int * indLab2) {
-//     // inicializa indices lab
-//     indLab1 = -1;
-//     indLab2 = -1;
-
-//     int i, total, quant_virus, quant_infectados, quant_elementx;
-
-//     i = 0; // +3
-//     quant_virus = 0;
-//     quant_infectados = 0;
-//     quant_elementx = 0;
-//     total = 0;
-//     totalAnterior = 0;
-
-//     total = get_insumo_disponivel(bancada[(1 + i)]) + get_insumo_disponivel(bancada[(2 + i)]) + get_insumo_disponivel(bancada[(3 + i)]);
-
-//     if ( (bolsa[0] != INSUMO_INFINITO) && (bancada[(1 + i)] != INSUMO_INDISPONIVEL) ) {
-//         quant_virus = bancada[(1 + i)];
-//     }
-    
-//     if ( (bolsa[1] != INSUMO_INFINITO) && (bancada[(2 + i)] != INSUMO_INDISPONIVEL) ) {
-//         quant_infectados = bancada[(2 + i)];
-//     }
-    
-//     if ( (bolsa[2] != INSUMO_INFINITO) && (bancada[(3 + i)] != INSUMO_INDISPONIVEL) ) {
-//         quant_elementx = bancada[(3 + i)];
-//     }
-    
-//     totalAnterior = total;
-
-    
-    
-        
-// }
-
 
 int gera_multiplo_x(int intervalo_max, int x) {
     int numero = 0;
@@ -322,6 +279,7 @@ void* f_infectado (void* argumento) {
         bool falta_insumo = FALSE;
         int consumiu = 0;
         bool ja_consumiu = FALSE;
+        bool deve_esperar = FALSE;
         bool visitouTodosLabs = FALSE;
         int idLab = 0;
         int posicaoNaBancada = 0;
@@ -404,6 +362,8 @@ void* f_infectado (void* argumento) {
 
                 pthread_cond_broadcast(infectado->infectadoCondicional);
 
+                deve_esperar = TRUE;
+
             } else {
 
                 (*infectado->contadorBarreira)++;
@@ -420,6 +380,8 @@ void* f_infectado (void* argumento) {
         } else {
 
             printf("\n~INF[%d] diz: 'Poxa, não produzi minha vacina'\n", infectado->id);
+
+            deve_esperar = TRUE;
             
             // pthread_cond_broadcast(infectado->infectadoCondicional);
             
@@ -446,7 +408,11 @@ void* f_infectado (void* argumento) {
 
         pthread_mutex_unlock(infectado->bancadaMutex);
     
-        sleep( 10 + rand() % 20);
+        if (deve_esperar == TRUE) {
+            deve_esperar = FALSE;
+            sleep(5);
+        }
+        
 
     }
     
