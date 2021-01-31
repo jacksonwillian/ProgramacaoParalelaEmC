@@ -156,10 +156,8 @@ void* f_laboratorio (void* argumento) {
 
     laboratorio_t *laboratorio = (laboratorio_t *)argumento;
 
-    int quantEmEstoque = 0;
     bool continuarOperando = TRUE;
     bool sem_insumos = FALSE;
-    int posicao=0;
 
     while (continuarOperando == TRUE) {
 
@@ -212,16 +210,12 @@ void* f_infectado (void* argumento) {
 
     infectado_t *infectado = (infectado_t *)argumento;
 
-    int quantInsumoFaltante = 0;
-    int totalEstoque = 0;
     int i = 0;
-    int k = 0;
     bool continuarOperando = TRUE;
     int tamanhoVetor = 0;
     bool conseguiu_consumir = FALSE;
     int totalLaboratoriosVisitados = 0;
     bool falta_insumo = FALSE;
-    int consumiu = 0;
     bool ja_consumiu = FALSE;
     bool deve_esperar = FALSE;
     bool visitouTodosLabs = FALSE;
@@ -234,7 +228,6 @@ void* f_infectado (void* argumento) {
 
         totalLaboratoriosVisitados = 0;
         falta_insumo = FALSE;
-        consumiu = 0;
         ja_consumiu = FALSE;
         deve_esperar = FALSE;
         visitouTodosLabs = FALSE;
@@ -394,7 +387,7 @@ void* f_infectado (void* argumento) {
 int main(int argc, char** argv) {
 
     /* DECLARAÇÃO DAS VARIAVEIS */
-    int i, tamVetor, atingiramObjetivo, ciclosMinimos, contadorBarreira, infectadoAguardando, posicaoInsumoInfinito, posicaoInsumoIndisponivel;
+    int i, tamVetor, atingiramObjetivo, ciclosMinimos, contadorBarreira, posicaoInsumoInfinito, posicaoInsumoIndisponivel;
     int *bancada;
     laboratorio_t *laboratorios;
     infectado_t *infectados;
@@ -418,7 +411,6 @@ int main(int argc, char** argv) {
     ciclosMinimos = atoi(argv[1]);
     atingiramObjetivo = 0;
     contadorBarreira = 0;
-    infectadoAguardando = 0;
     posicaoInsumoIndisponivel = 0;
     posicaoInsumoInfinito = 0;
     laboratorios = malloc(sizeof(laboratorio_t) * QUANT_LABORATORIOS);
