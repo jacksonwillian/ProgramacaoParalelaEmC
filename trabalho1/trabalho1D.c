@@ -201,7 +201,8 @@ void* f_laboratorio (void* argumento) {
 
                 printf("\n#LAB[%d] restabeleceu o estoque %d vezes.\n", laboratorio->id, laboratorio->ciclosAtual);
             }
-
+            
+            /* coloca as threads laboratório para dormir */
             while ( pthread_cond_wait (&(laboratorio->laboratorioCondicional[(laboratorio->id - 1)]), laboratorio->bancadaMutex) != 0 );
         }
 
@@ -395,7 +396,7 @@ void* f_infectado (void* argumento) {
 
 int main(int argc, char** argv) {
 
-    /* DECLARAÇÃO DAS VARIAVEIS */
+    /* DECLARAÇÃO DAS VARIÁVEIS */
     int i, tamVetor, atingiramObjetivo, ciclosMinimos, contadorBarreira, posicaoInsumoInfinito, posicaoInsumoIndisponivel;
     int *bancada;
     laboratorio_t *laboratorios;
@@ -416,7 +417,7 @@ int main(int argc, char** argv) {
     }   
  
 
-    /* INICIALIZACAO DAS VARIAVEIS */    
+    /* INICIALIZAÇÃO DAS VARIÁVEIS */    
     ciclosMinimos = atoi(argv[1]);
     atingiramObjetivo = 0;
     contadorBarreira = 0;
@@ -433,7 +434,7 @@ int main(int argc, char** argv) {
     pthread_cond_init(&infectadoCondicional, NULL);
 
 
-    /* INICIALIZA LABORATORIOS */
+    /* INICIALIZA LABORATÓRIOS */
 
     for (i=0; i < QUANT_LABORATORIOS; i++) {
         pthread_cond_init(&(laboratorioCondicional[i]), NULL);
@@ -508,7 +509,7 @@ int main(int argc, char** argv) {
     }
 
 
-    /* ESPERA AS THREADS */    
+    /* ESPERA AS THREADS TERMINAREM */    
 
     for (i = 0; i < QUANT_LABORATORIOS; i++) {
         pthread_join(laboratorios[i].thread, NULL);
@@ -520,7 +521,7 @@ int main(int argc, char** argv) {
 
 
 
-    /* MOSTRA O RESULTADO */
+    /* APRESENTA O RESULTADO */
 
     for (i = 0; i < QUANT_LABORATORIOS; i++) {
         printf("\n>>> laboratorio %d: %d\n", laboratorios[i].id, laboratorios[i].ciclosAtual); 
@@ -532,7 +533,7 @@ int main(int argc, char** argv) {
 
 
 
-    /* DESTROI MEMORIA ALOCADA */
+    /* DESTRÓI MEMÓRIA ALOCADA */
     
     pthread_mutex_destroy(&bancadaMutex);
 
@@ -549,6 +550,7 @@ int main(int argc, char** argv) {
     free(infectados); 
 
     free(bancada); 
+
 
     return 0;
 }
