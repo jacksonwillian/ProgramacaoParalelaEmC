@@ -37,4 +37,6 @@ Exemplo de de execucao:
 Obs.: Ira executar ate todas as threads terem executado seu objetivo PELO MENOS 90 vezes.
 Isso eh um exemplo de MOLDE e em nenhum momento condiz com a real saida de numeros esperada.
 
-gcc -Wall -pedantic -o <executavel> <codigos fontes> -lpthread
+gcc -Wall -pedantic -o [executavel] [codigos fontes] -lpthread
+
+valgrind --leak-check=yes ./codigoExecutavel arg1 arg2

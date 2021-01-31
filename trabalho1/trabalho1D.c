@@ -62,19 +62,19 @@ bool bancada_sem_insumos(int * bancada, int posicao) {
 
 
     /* contagem de vírus morto */
-    if (bancada[posicao] == 0) {
+    if (bancada[posicao] != INSUMO_INDISPONIVEL && bancada[posicao] == 0) {
         itens_na_bancada--;
     }
 
     /* contagem de injeção */
     posicao++;
-    if (bancada[posicao] == 0) {
+    if (bancada[posicao] != INSUMO_INDISPONIVEL && bancada[posicao] == 0) {
         itens_na_bancada--;
     }
 
     /* contagem de elementox */
     posicao++;
-    if (bancada[posicao] == 0) {
+    if (bancada[posicao] != INSUMO_INDISPONIVEL && bancada[posicao] == 0) {
         itens_na_bancada--;
     }
 
@@ -111,19 +111,22 @@ bool bolsa_estah_cheia(int * bolsa) {
     int capacidade_da_bolsa = 2;
 
     int total_itens = 0;
+    int posicao = 0;
 
     /* contagem de vírus morto */
-    if (bolsa[0] > 0) {
+    if (bolsa[posicao] != INSUMO_INFINITO && bolsa[posicao] > 0) {
        total_itens++;
     }
 
     /* contagem de injeção */
-    if (bolsa[1] > 0) {
+    posicao++;
+    if (bolsa[posicao] != INSUMO_INFINITO && bolsa[posicao] > 0) {
         total_itens++;
     }
 
     /* contagem de elementoX */
-    if (bolsa[2] > 0) {
+    posicao++;
+    if (bolsa[posicao] != INSUMO_INFINITO && bolsa[posicao] > 0) {
         total_itens++;
     } 
 
@@ -134,19 +137,23 @@ bool bolsa_estah_cheia(int * bolsa) {
 /* esvazia a bolsa dos infectados */
 void esvaziar_bolsa(int * bolsa) {
 
+    int posicao = 0;
+
     /* esvazia virus */
-    if (bolsa[0] != INSUMO_INFINITO) {
-        bolsa[0] = 0;
+    if (bolsa[posicao] != INSUMO_INFINITO) {
+        bolsa[posicao] = 0;
     }
 
     /* esvazia injecao */
-    if (bolsa[1] != INSUMO_INFINITO) {
-        bolsa[1] = 0;
+    posicao++;
+    if (bolsa[posicao] != INSUMO_INFINITO) {
+        bolsa[posicao] = 0;
     }
 
     /* esvazia elementoX */
-    if (bolsa[2] != INSUMO_INFINITO) {
-        bolsa[2] = 0;
+    posicao++;
+    if (bolsa[posicao] != INSUMO_INFINITO) {
+        bolsa[posicao] = 0;
     } 
 }
 
@@ -221,19 +228,11 @@ void* f_infectado (void* argumento) {
     bool visitouTodosLabs = FALSE;
     int idLab = 0;
     int posicaoNaBancada = 0;   
+    int posicaoNaBolsa = 0;   
 
     while (continuarOperando == TRUE) {
            
         pthread_mutex_lock(infectado->bancadaMutex);
-
-        totalLaboratoriosVisitados = 0;
-        falta_insumo = FALSE;
-        ja_consumiu = FALSE;
-        deve_esperar = FALSE;
-        visitouTodosLabs = FALSE;
-        idLab = 0;
-        posicaoNaBancada = 0;
-        
 
         if ( (*infectado->atingiramObjetivo) == (QUANT_LABORATORIOS + QUANT_INFECTADOS) ) {
             
@@ -258,46 +257,56 @@ void* f_infectado (void* argumento) {
             /* gera um valor de indice 'aleatorio' para iniciar a busca de insumo no vetor (bancada) */
             i = gera_indice(tamanhoVetor, TAMANHO_REPOSITORIO);            
 
+            /* flag para indicar que o infectado visitou ou não todas as bancadas dos labaratorios */
+            visitouTodosLabs = FALSE;
+            totalLaboratoriosVisitados = 0;
+            
 
             while( bolsa_estah_cheia(infectado->bolsa) != TRUE && visitouTodosLabs == FALSE) {
 
                 /* flag para indicar se o infectado ja consumiu ou nao insumo em alguma posicao da bancada do laboratorio */
                 ja_consumiu = FALSE;
                 
-                /* garante que o valor atribuido a variavel 'i' seja correto */
+
+                /* garante que o valor atribuido a variavel 'i' seja válido */
                 i = (i >= (tamanhoVetor - 1)) ? 1 : i;
                 i = (i == 0) ? 1 : i;
                 
 
                 /* calculo para encontrar o id do laboratorio */
+                idLab = 0;
                 idLab = ((i-1)/TAMANHO_REPOSITORIO) + 1;
 
 
                 /* posicao do virus morto */
                 posicaoNaBancada = i;
-                if ( (infectado->bolsa[0] == 0)  &&  (infectado->bancada[posicaoNaBancada] > 0) && (ja_consumiu == FALSE)) {
+                posicaoNaBolsa = 0;   
+                if ( (infectado->bolsa[posicaoNaBolsa] == 0)  &&  (infectado->bancada[posicaoNaBancada] > 0) && (ja_consumiu == FALSE)) {
                     infectado->bancada[posicaoNaBancada] = 0;
-                    infectado->bolsa[0] = 1;
+                    infectado->bolsa[posicaoNaBolsa] = 1;
                     ja_consumiu = TRUE;
                 }
 
                 /* posicao da injecao */
                 posicaoNaBancada++;
-                if ( (infectado->bolsa[1] == 0)  &&  (infectado->bancada[posicaoNaBancada] > 0) && (ja_consumiu == FALSE)) {
+                posicaoNaBolsa++;
+                if ( (infectado->bolsa[posicaoNaBolsa] == 0)  &&  (infectado->bancada[posicaoNaBancada] > 0) && (ja_consumiu == FALSE)) {
                     infectado->bancada[posicaoNaBancada] = 0;
-                    infectado->bolsa[1] = 1;
+                    infectado->bolsa[posicaoNaBolsa] = 1;
                     ja_consumiu = TRUE;
                 }
 
                 /* posicao do elementox */
                 posicaoNaBancada++;
-                if ( (infectado->bolsa[2] == 0)  &&  (infectado->bancada[posicaoNaBancada] > 0) && (ja_consumiu == FALSE)) {
+                posicaoNaBolsa++;
+                if ( (infectado->bolsa[posicaoNaBolsa] == 0)  &&  (infectado->bancada[posicaoNaBancada] > 0) && (ja_consumiu == FALSE)) {
                     infectado->bancada[posicaoNaBancada] = 0;
-                    infectado->bolsa[2] = 1;
+                    infectado->bolsa[posicaoNaBolsa] = 1;
                     ja_consumiu = TRUE;
                 }
 
                 /* verifica se o laboratorio tem ou nao insumo */
+                falta_insumo = FALSE;
                 falta_insumo = bancada_sem_insumos(infectado->bancada, i);
 
                 if (falta_insumo == TRUE) {
@@ -339,7 +348,7 @@ void* f_infectado (void* argumento) {
                     /* envia um sinal para acordar todas as threads infectados que podem estar dormindo */
                     pthread_cond_broadcast(infectado->infectadoCondicional);
                     
-                    /* flag para indicar que a thread deve esperar alguns segudos antes de tentar visitar a bancada */
+                    /* flag para indicar que a thread deve esperar alguns segudos antes de tentar visitar a bancada novamente */
                     deve_esperar = TRUE;
 
                 } else {
@@ -356,7 +365,7 @@ void* f_infectado (void* argumento) {
 
                 /* QUANDO O INFECTADO NÃO COMPLETOU A VACINA */
 
-                /* flag para indicar que a thread deve esperar alguns segudos antes de tentar visitar a bancada */
+                /* flag para indicar que a thread deve esperar alguns segudos antes de tentar visitar a bancada novamente */
                 deve_esperar = TRUE;
 
                 /* se for a segunda vez que o infectado tentou e não conseguiu completar a vacina, então acorda os outros infectados */
@@ -461,6 +470,7 @@ int main(int argc, char** argv) {
 
 
     /* INICIALIZA INFECTADOS */
+    
     for (i=0; i < QUANT_INFECTADOS; i++){
         infectados[i].id = i+1;
         infectados[i].bancada = bancada;             
@@ -521,12 +531,24 @@ int main(int argc, char** argv) {
     }
 
 
+
     /* DESTROI MEMORIA ALOCADA */
     
-    // sem_destroy(&objetivoMutex);
-    // pthread_mutex_destroy(&bancadaMutex);
-    // pthread_cond_destroy(&condicionalLaboratorio);    
-    // pthread_cond_destroy(&condicionalInfectado);    
+    pthread_mutex_destroy(&bancadaMutex);
+
+    for (i=0; i < QUANT_LABORATORIOS; i++) {
+        pthread_cond_destroy(&(laboratorioCondicional[i]));
+    }
+
+    pthread_cond_destroy(&infectadoCondicional);   
+
+    free(laboratorioCondicional); 
+
+    free(laboratorios); 
+
+    free(infectados); 
+
+    free(bancada); 
 
     return 0;
 }
