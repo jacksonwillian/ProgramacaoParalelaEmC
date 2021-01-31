@@ -46,7 +46,7 @@ typedef struct {
 } infectado_t; 
 
 
-/* gera um valor de indice 'aleatorio' para iniciar a busca de insumo no vetor (bancada) */
+/* gera um valor de indice 'aleatório' para iniciar a busca de insumo no vetor (bancada) */
 int gera_indice(int intervalo_max, int x) {
     int numero = 0;
     numero = rand() % intervalo_max;
@@ -201,7 +201,7 @@ void* f_laboratorio (void* argumento) {
 
                 printf("\n#LAB[%d] restabeleceu o estoque %d vezes.\n", laboratorio->id, laboratorio->ciclosAtual);
             }
-            
+
             /* coloca as threads laboratório para dormir */
             while ( pthread_cond_wait (&(laboratorio->laboratorioCondicional[(laboratorio->id - 1)]), laboratorio->bancadaMutex) != 0 );
         }
@@ -455,6 +455,7 @@ int main(int argc, char** argv) {
         laboratorios[i].infectadoCondicional = &infectadoCondicional;
 
         /* INICIALIZA REPOSITORIO */
+        
         for(int k=0; k < TAMANHO_REPOSITORIO; k++) {
             if (k == posicaoInsumoIndisponivel) {
                 bancada[posicaoInsumo] = INSUMO_INDISPONIVEL;
@@ -484,6 +485,7 @@ int main(int argc, char** argv) {
         infectados[i].atingiramObjetivo = &atingiramObjetivo;
 
         /* INICIALIZA REPOSITORIO */
+
         for(int k=0; k < TAMANHO_REPOSITORIO; k++) {
             if (k == posicaoInsumoInfinito) {
                 infectados[i].bolsa[k] = INSUMO_INFINITO;
