@@ -408,11 +408,11 @@ int main(int argc, char** argv) {
 
     /* VALIDAÇÃO DE ENTRADAS */
     if ( argc != 2 ) {
-        printf("\nQuantidades de argumentos são inválidos!\n");
-        printf("\nPrimeiro argumento eh numero de vezes MINIMO que cada um realizou seu objetivo primordial.\n");
+        printf("\nA quantidade de argumentos é inválida!\n");
+        printf("\nO primeiro argumento é o número mínimo de vezes que cada um deve realizar seu objetivo primordial.\n\n");
         return -1;
     } else if ( atoi(argv[1]) < 1) {
-        printf("\nValor do argumento eh inválido!\n");
+        printf("\nO valor do argumento é inválido!\n\n");
         return -1;
     }   
  
@@ -455,7 +455,7 @@ int main(int argc, char** argv) {
         laboratorios[i].infectadoCondicional = &infectadoCondicional;
 
         /* INICIALIZA REPOSITORIO */
-        
+
         for(int k=0; k < TAMANHO_REPOSITORIO; k++) {
             if (k == posicaoInsumoIndisponivel) {
                 bancada[posicaoInsumo] = INSUMO_INDISPONIVEL;
