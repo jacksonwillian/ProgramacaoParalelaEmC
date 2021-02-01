@@ -7,13 +7,12 @@
 #define TRUE 1
 #define FALSE 0
 
-#define QUANT_INFECTADOS 3
-#define QUANT_LABORATORIOS 3
+#define TOTAL_INFECTADOS 3
+#define TOTAL_LABORATORIOS 3
 #define TAMANHO_REPOSITORIO 3
 
 #define INSUMO_INFINITO -1
 #define INSUMO_INDISPONIVEL -1
-
 
 typedef int bool;
 
@@ -80,6 +79,7 @@ bool bancada_sem_insumos(int * bancada, int posicao) {
 
     return (itens_na_bancada == 0) ? TRUE : FALSE;
 } 
+
 
 /* adiciona os insumos na posição da bancada pertencete a um laboratório */
 void repor_bancada(int * bancada, int labID, int posicaoInicialBancada) {
@@ -158,7 +158,7 @@ void esvaziar_bolsa(int * bolsa) {
 }
 
 
-/* permite que os laboratorios produzam os insumos */
+/* laboratorios produzem os insumos */
 void* f_laboratorio (void* argumento) {
 
     laboratorio_t *laboratorio = (laboratorio_t *)argumento;
@@ -170,7 +170,7 @@ void* f_laboratorio (void* argumento) {
 
         pthread_mutex_lock(laboratorio->bancadaMutex);
 
-        if ( (*laboratorio->atingiramObjetivo) == (QUANT_LABORATORIOS + QUANT_INFECTADOS) ) {
+        if ( (*laboratorio->atingiramObjetivo) == (TOTAL_LABORATORIOS + TOTAL_INFECTADOS) ) {
             
             /* QUANDO TODOS ATINGIRAM O OBJETIVO */
 
@@ -178,7 +178,7 @@ void* f_laboratorio (void* argumento) {
             continuarOperando = FALSE;  
 
             /* envia um sinal para acordar todas as threads laboratorio que podem estar dormindo */
-            for (int l = 0; l < QUANT_LABORATORIOS; l++) {
+            for (int l = 0; l < TOTAL_LABORATORIOS; l++) {
                 pthread_cond_signal(&(laboratorio->laboratorioCondicional[l]));
             }
 
@@ -213,7 +213,7 @@ void* f_laboratorio (void* argumento) {
 }
 
 
-// Permite que os infectados consumam os insumos
+/* infectados consomem os insumos */
 void* f_infectado (void* argumento) {
 
     infectado_t *infectado = (infectado_t *)argumento;
@@ -235,7 +235,7 @@ void* f_infectado (void* argumento) {
            
         pthread_mutex_lock(infectado->bancadaMutex);
 
-        if ( (*infectado->atingiramObjetivo) == (QUANT_LABORATORIOS + QUANT_INFECTADOS) ) {
+        if ( (*infectado->atingiramObjetivo) == (TOTAL_LABORATORIOS + TOTAL_INFECTADOS) ) {
             
             /* QUANDO TODOS ATINGIRAM O OBJETIVO */
 
@@ -246,7 +246,7 @@ void* f_infectado (void* argumento) {
             pthread_cond_broadcast(infectado->infectadoCondicional);
 
             /* envia um sinal para acordar todas as threads laboratorio que podem estar dormindo */
-            for (int l = 0; l < QUANT_LABORATORIOS; l++) {
+            for (int l = 0; l < TOTAL_LABORATORIOS; l++) {
                 pthread_cond_signal(&(infectado->laboratorioCondicional[l]));
             }
 
@@ -340,7 +340,7 @@ void* f_infectado (void* argumento) {
                 
                 printf("\n~INF[%d] completou a vacina %d vezes.\n", infectado->id, infectado->ciclosAtual);
                         
-                if ( (*infectado->contadorBarreira) == (QUANT_INFECTADOS-1) ) {
+                if ( (*infectado->contadorBarreira) == (TOTAL_INFECTADOS-1) ) {
                     
                     /* QUANDO A ÚLTIMA THREAD INFECTADO COMPLETA A VACINA */
 
@@ -397,8 +397,7 @@ void* f_infectado (void* argumento) {
 int main(int argc, char** argv) {
 
     /* DECLARAÇÃO DAS VARIÁVEIS */
-    int i, tamVetor, atingiramObjetivo, ciclosMinimos, contadorBarreira, posicaoInsumoInfinito, posicaoInsumoIndisponivel;
-    int *bancada;
+    int i, tamVetor, *bancada, atingiramObjetivo, ciclosMinimos, contadorBarreira, posicaoInsumoInfinito, posicaoInsumoIndisponivel;
     laboratorio_t *laboratorios;
     infectado_t *infectados;
     sem_t objetivoMutex;
@@ -423,11 +422,11 @@ int main(int argc, char** argv) {
     contadorBarreira = 0;
     posicaoInsumoIndisponivel = 0;
     posicaoInsumoInfinito = 0;
-    laboratorios = malloc(sizeof(laboratorio_t) * QUANT_LABORATORIOS);
-    laboratorioCondicional = malloc(sizeof(pthread_cond_t) * QUANT_LABORATORIOS);
-    tamVetor = ( TAMANHO_REPOSITORIO * QUANT_LABORATORIOS) + 1;
+    laboratorios = malloc(sizeof(laboratorio_t) * TOTAL_LABORATORIOS);
+    laboratorioCondicional = malloc(sizeof(pthread_cond_t) * TOTAL_LABORATORIOS);
+    tamVetor = ( TAMANHO_REPOSITORIO * TOTAL_LABORATORIOS) + 1;
     bancada =  malloc(sizeof(int) * tamVetor);                
-    infectados = malloc(sizeof(infectado_t) * QUANT_INFECTADOS);
+    infectados = malloc(sizeof(infectado_t) * TOTAL_INFECTADOS);
     bancada[0] = tamVetor;                                  
     sem_init(&objetivoMutex, 0, 1);
     pthread_mutex_init(&bancadaMutex, NULL);
@@ -436,13 +435,13 @@ int main(int argc, char** argv) {
 
     /* INICIALIZA LABORATÓRIOS */
 
-    for (i=0; i < QUANT_LABORATORIOS; i++) {
+    for (i=0; i < TOTAL_LABORATORIOS; i++) {
         pthread_cond_init(&(laboratorioCondicional[i]), NULL);
     }
 
 
     int posicaoInsumo = 1;
-    for (i=0; i < QUANT_LABORATORIOS; i++){
+    for (i=0; i < TOTAL_LABORATORIOS; i++){
 
         laboratorios[i].id = i+1;
         laboratorios[i].bancada = bancada;
@@ -473,7 +472,8 @@ int main(int argc, char** argv) {
 
     /* INICIALIZA INFECTADOS */
     
-    for (i=0; i < QUANT_INFECTADOS; i++){
+    for (i=0; i < TOTAL_INFECTADOS; i++){
+        
         infectados[i].id = i+1;
         infectados[i].bancada = bancada;             
         infectados[i].ciclosMinimos = ciclosMinimos;       
@@ -502,22 +502,22 @@ int main(int argc, char** argv) {
 
     /* EXECUTA AS THREADS */   
 
-    for (i = 0; i < QUANT_LABORATORIOS; i++) {
+    for (i = 0; i < TOTAL_LABORATORIOS; i++) {
         pthread_create(&(laboratorios[i].thread), NULL, f_laboratorio, &(laboratorios[i]));
     }
 
-    for (i = 0; i < QUANT_INFECTADOS; i++) {
+    for (i = 0; i < TOTAL_INFECTADOS; i++) {
         pthread_create(&(infectados[i].thread), NULL, f_infectado, &(infectados[i]));
     }
 
 
     /* ESPERA AS THREADS TERMINAREM */    
 
-    for (i = 0; i < QUANT_LABORATORIOS; i++) {
+    for (i = 0; i < TOTAL_LABORATORIOS; i++) {
         pthread_join(laboratorios[i].thread, NULL);
     }
 
-    for (i = 0; i < QUANT_INFECTADOS; i++) {
+    for (i = 0; i < TOTAL_INFECTADOS; i++) {
         pthread_join(infectados[i].thread, NULL);
     }
 
@@ -525,11 +525,11 @@ int main(int argc, char** argv) {
 
     /* APRESENTA O RESULTADO */
 
-    for (i = 0; i < QUANT_LABORATORIOS; i++) {
+    for (i = 0; i < TOTAL_LABORATORIOS; i++) {
         printf("\n>>> laboratorio %d: %d\n", laboratorios[i].id, laboratorios[i].ciclosAtual); 
     }
 
-    for (i = 0; i < QUANT_INFECTADOS; i++) {
+    for (i = 0; i < TOTAL_INFECTADOS; i++) {
         printf("\n>>> infectado %d: %d\n", infectados[i].id, infectados[i].ciclosAtual); 
     }
 
@@ -539,7 +539,7 @@ int main(int argc, char** argv) {
     
     pthread_mutex_destroy(&bancadaMutex);
 
-    for (i=0; i < QUANT_LABORATORIOS; i++) {
+    for (i=0; i < TOTAL_LABORATORIOS; i++) {
         pthread_cond_destroy(&(laboratorioCondicional[i]));
     }
 
