@@ -40,3 +40,4 @@ Isso eh um exemplo de MOLDE e em nenhum momento condiz com a real saida de numer
 gcc -Wall -pedantic -o [executavel] [codigos fontes] -lpthread
 
 valgrind --leak-check=yes ./codigoExecutavel arg1 arg2
+
