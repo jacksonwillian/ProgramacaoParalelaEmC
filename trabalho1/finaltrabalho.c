@@ -10,12 +10,10 @@
 #define TOTAL_LABORATORIOS 3
 #define TOTAL_INSUMOS 3
 
-
 typedef enum {
     false = 0,
     true = 1
 } bool;
-
 
 typedef enum { 
     Virus = 0,
@@ -23,12 +21,10 @@ typedef enum {
     Elementox = 2 
 } insumo_t;
 
-
 typedef struct {
     sem_t quantidade;
     insumo_t tipo;
 } produto_t;
-
 
 typedef struct {
     pthread_t thread;
@@ -40,7 +36,6 @@ typedef struct {
     produto_t *produto2;
     pthread_mutex_t *bancadaMutex;             
 } laboratorio_t;
-
 
 typedef struct {
     pthread_t thread;
@@ -54,44 +49,31 @@ typedef struct {
 } infectado_t; 
 
 
-
 void print_laboratorio(int id, insumo_t tipo_insumo) {
-
     switch(tipo_insumo) {
-        case Virus: {
+        case Virus: 
             printf("\nLAB %d Disponibiliza vírus", id);
-        }
         break;
-
-        case Injecao: {
+        case Injecao: 
             printf("\nLAB %d Disponibiliza injeção", id);
-        }
         break;
-
-        case Elementox: {
+        case Elementox: 
             printf("\nLAB %d Disponibiliza elementox", id);
-        }
         break;
     }
 }
 
 
 void print_infectado(int id, insumo_t tipo_insumo) {
-
     switch(tipo_insumo) {
-        case Virus: {
+        case Virus:
             printf("\nINF %d Tem vírus", id);
-        }
         break;
-
-        case Injecao: {
+        case Injecao:
             printf("\nINF %d Tem injeção", id);
-        }
         break;
-
-        case Elementox: {
+        case Elementox: 
             printf("\nINF %d Tem elementox", id);
-        }
         break;
     }
 }
@@ -258,11 +240,8 @@ int main(int argc, char** argv) {
     /* DESTRÓI MEMÓRIA ALOCADA */
     
     pthread_mutex_destroy(&bancadaMutex);
-  
     free(laboratorios); 
-
     free(infectados); 
-
     free(bancada); 
 
     return 0;
