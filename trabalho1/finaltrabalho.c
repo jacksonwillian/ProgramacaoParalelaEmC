@@ -126,6 +126,10 @@ void* f_laboratorio (void* argumento) {
                     if (laboratorio->ciclosAtual == laboratorio->ciclosMinimos) {
                         (*laboratorio->atingiramObjetivo)++;
                         printf("\nLAB %d alcançou objetivo", laboratorio->id);
+
+                        if ( (*laboratorio->atingiramObjetivo) == (TOTAL_INFECTADOS + TOTAL_LABORATORIOS) ) {
+                            continuarOperando = false;
+                        }
                     }
 
                     esperar = true;
@@ -135,16 +139,15 @@ void* f_laboratorio (void* argumento) {
 
             pthread_mutex_unlock(laboratorio->bancadaMutex);
 
+            sleep(10);
+
         } else {
             // printf("\nLAB %d não usou a bancada", laboratorio->id);
         }
 
-        if(esperar==true) {
-            esperar = false;
-            sleep(1 + rand() % 3);
-        }
+        sleep(10);
 
-        sleep(1 + rand() % 3);
+
 
     }
     
@@ -166,7 +169,7 @@ void* f_infectado (void* argumento) {
     insumo_t insumo2Tipo;
     int insumo2Posicao;
     int produtoVerificados;
-    int i;
+    int i = (rand() % (int) TOTAL_PRODUTO_BANCADA);
     int quantidade;
     bool esperar;
 
@@ -195,8 +198,8 @@ void* f_infectado (void* argumento) {
          
         produtoVerificados = 0;
         
-        i = rand() % TOTAL_PRODUTO_BANCADA;
-        while ( (insumo1Posicao == -1 || insumo2Posicao == -1) && (produtoVerificados < TOTAL_PRODUTO_BANCADA) ) {
+      
+        while ( (insumo1Posicao == -1 || insumo2Posicao == -1) && (produtoVerificados <= TOTAL_PRODUTO_BANCADA) ) {
             
             if (sem_getvalue(&(infectado->bancada[i].quantidade), &quantidade) == 0) {
 
@@ -213,7 +216,7 @@ void* f_infectado (void* argumento) {
                 }
 
                 i++;
-                i = (i == (TOTAL_PRODUTO_BANCADA - 1) ? 0 : i);
+                i = (i == TOTAL_PRODUTO_BANCADA) ? 0 : i;
                 produtoVerificados++;
 
             }
@@ -242,8 +245,8 @@ void* f_infectado (void* argumento) {
                 
                 produtoVerificados = 0;
                 
-                i = rand() % TOTAL_PRODUTO_BANCADA;
-                while ( (insumo1Posicao == -1 || insumo2Posicao == -1) && (produtoVerificados < TOTAL_PRODUTO_BANCADA) ) {
+
+                while ( (insumo1Posicao == -1 || insumo2Posicao == -1) && (produtoVerificados <= TOTAL_PRODUTO_BANCADA) ) {
                         
                     if (sem_getvalue(&(infectado->bancada[i].quantidade), &quantidade) == 0) {
 
@@ -261,8 +264,8 @@ void* f_infectado (void* argumento) {
 
                         produtoVerificados++;
                         i++;
-                        i = (i == (TOTAL_PRODUTO_BANCADA - 1) ? 0 : i);
-                    }
+                        i = (i == TOTAL_PRODUTO_BANCADA) ? 0 : i;
+                    } 
             
                 }
 
@@ -279,6 +282,10 @@ void* f_infectado (void* argumento) {
                     if (infectado->ciclosAtual == infectado->ciclosMinimos) {
                         (*infectado->atingiramObjetivo)++;
                         printf("\nINF %d alcançou objetivo", infectado->id);
+
+                        if ( (*infectado->atingiramObjetivo) == (TOTAL_INFECTADOS + TOTAL_LABORATORIOS) ) {
+                            continuarOperando = false;
+                        }
                     }
 
                     esperar = true;
@@ -289,16 +296,19 @@ void* f_infectado (void* argumento) {
 
             pthread_mutex_unlock(infectado->bancadaMutex);
 
+            if (esperar == true) {
+                esperar =false;
+                sleep(5 + rand() % 5);
+            }
+
+
         } else {
             printf("\nINF %d não encontrou seus insumos", infectado->id); 
         }
 
-        if(esperar==true) {
-            esperar = false;
-            sleep(1 + rand() % 3);
-        }
 
-        sleep(1 + rand() % 3);
+        sleep(3);
+        
     
     }
     
