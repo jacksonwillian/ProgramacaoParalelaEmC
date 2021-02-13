@@ -1,10 +1,15 @@
 /* TRABALHO 1: Jackson Willian Silva Agostinho - 20172BSI0335 */ 
 
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
 #include <pthread.h> 
 #include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #define TOTAL_INFECTADOS 3
 #define TOTAL_LABORATORIOS 3
@@ -155,10 +160,18 @@ void* f_laboratorio (void* argumento) {
 
                 pthread_mutex_unlock(laboratorio->bancadaMutex);
 
+                #ifdef _WIN32
+                Sleep(800);
+                #else
                 sleep(0.8);
+                #endif
 
             } else {
+                #ifdef _WIN32
+                Sleep(200);
+                #else
                 sleep(0.2);
+                #endif
             }
         }
 
@@ -214,10 +227,18 @@ void* f_infectado (void* argumento) {
 
             pthread_mutex_unlock(infectado->bancadaMutex);
 
+            #ifdef _WIN32
+            Sleep(800);
+            #else
             sleep(0.8);
+            #endif
 
         } else {
+            #ifdef _WIN32
+            Sleep(200);
+            #else
             sleep(0.2);
+            #endif
         }
 
         if (sem_getvalue(infectado->atingiramObjetivo, &atingiramObjetivo) == 0) {
