@@ -31,8 +31,7 @@ typedef struct {
     pthread_t thread;
     int id;
     int ciclosMinimos;
-    int ciclosAtual;
-    int *atingiramObjetivo;                               
+    int ciclosAtual;                              
     produto_t *produto1;
     produto_t *produto2;
     pthread_mutex_t *bancadaMutex;
@@ -43,8 +42,7 @@ typedef struct {
     pthread_t thread;
     int id;
     int ciclosMinimos;    
-    int ciclosAtual;    
-    int *atingiramObjetivo;                                
+    int ciclosAtual;                               
     insumo_t insumoInfinito;  
     produto_t *bancada;
     pthread_mutex_t *bancadaMutex;
@@ -319,7 +317,7 @@ void* f_infectado (void* argumento) {
 int main(int argc, char** argv) {
 
     /* DECLARAÇÃO DAS VARIÁVEIS */
-    int i, atingiramObjetivo, ciclosMinimos;
+    int i, ciclosMinimos;
     produto_t *bancada;
     laboratorio_t *laboratorios;
     infectado_t *infectados;
@@ -340,7 +338,6 @@ int main(int argc, char** argv) {
 
     /* INICIALIZAÇÃO DAS VARIÁVEIS */    
     ciclosMinimos = atoi(argv[1]);
-    atingiramObjetivo = 0;
     laboratorios = malloc(sizeof(laboratorio_t) * TOTAL_LABORATORIOS);
     bancada =  malloc(sizeof(produto_t) * TOTAL_PRODUTO_BANCADA);                
     infectados = malloc(sizeof(infectado_t) * TOTAL_INFECTADOS);                            
@@ -367,7 +364,6 @@ int main(int argc, char** argv) {
         laboratorios[i].id = i+1;
         laboratorios[i].ciclosMinimos = ciclosMinimos;
         laboratorios[i].ciclosAtual = 0;
-        laboratorios[i].atingiramObjetivo = &atingiramObjetivo;
         laboratorios[i].bancadaMutex = &bancadaMutex;
         laboratorios[i].concluiram = &concluiram;
         laboratorios[i].produto1 = &(bancada[produto]);
@@ -400,7 +396,6 @@ int main(int argc, char** argv) {
         infectados[i].ciclosAtual = 0;         
         infectados[i].bancadaMutex = &bancadaMutex;
         infectados[i].concluiram = &concluiram;
-        infectados[i].atingiramObjetivo = &atingiramObjetivo;
         infectados[i].insumoInfinito = (insumo_t) i; 
 
         print_infectado(infectados[i].id, infectados[i].insumoInfinito);
