@@ -35,7 +35,8 @@ typedef struct {
     int *atingiramObjetivo;                               
     produto_t *produto1;
     produto_t *produto2;
-    pthread_mutex_t *bancadaMutex;             
+    pthread_mutex_t *bancadaMutex;
+    sem_t *concluiram;             
 } laboratorio_t;
 
 typedef struct {
@@ -46,7 +47,8 @@ typedef struct {
     int *atingiramObjetivo;                                
     insumo_t insumoInfinito;  
     produto_t *bancada;
-    pthread_mutex_t *bancadaMutex;    
+    pthread_mutex_t *bancadaMutex;
+    sem_t *concluiram;      
 } infectado_t; 
 
 
@@ -90,6 +92,7 @@ void* f_laboratorio (void* argumento) {
     int quantidade2 = 0;
     bool errorSemaforo = false;
     bool esperar;
+    int concluiram;
 
     while (continuarOperando == true) {
         
@@ -110,32 +113,24 @@ void* f_laboratorio (void* argumento) {
 
             pthread_mutex_lock(laboratorio->bancadaMutex);
 
-            if ( (*laboratorio->atingiramObjetivo) == (TOTAL_INFECTADOS + TOTAL_LABORATORIOS) ) {
-                continuarOperando = false;
+            if ( (sem_post(&(laboratorio->produto1->quantidade)) != 0) 
+                || (sem_post(&(laboratorio->produto2->quantidade)) != 0)) {
+                printf("\nLAB %d erro ao produzir", laboratorio->id);
             } else {
 
-                if ( (sem_post(&(laboratorio->produto1->quantidade)) != 0) 
-                    || (sem_post(&(laboratorio->produto2->quantidade)) != 0)) {
-                    printf("\nLAB %d erro ao produzir", laboratorio->id);
-                } else {
+                laboratorio->ciclosAtual++;
 
-                    laboratorio->ciclosAtual++;
+                printf("\nLAB %d produziu %d vezes", laboratorio->id, laboratorio->ciclosAtual);
 
-                    printf("\nLAB %d produziu %d vezes", laboratorio->id, laboratorio->ciclosAtual);
-
-                    if (laboratorio->ciclosAtual == laboratorio->ciclosMinimos) {
-                        (*laboratorio->atingiramObjetivo)++;
-                        printf("\nLAB %d alcançou objetivo", laboratorio->id);
-
-                        if ( (*laboratorio->atingiramObjetivo) == (TOTAL_INFECTADOS + TOTAL_LABORATORIOS) ) {
-                            continuarOperando = false;
-                        }
-                    }
-
-                    esperar = true;
-
+                if (laboratorio->ciclosAtual == laboratorio->ciclosMinimos) {
+                    printf("\nLAB %d alcançou objetivo", laboratorio->id);
+                    sem_post(laboratorio->concluiram);
                 }
+
+                esperar = true;
+
             }
+    
 
             pthread_mutex_unlock(laboratorio->bancadaMutex);
 
@@ -147,6 +142,12 @@ void* f_laboratorio (void* argumento) {
 
         sleep(10);
 
+
+        if (sem_getvalue(laboratorio->concluiram, &concluiram) == 0) {
+            if (concluiram == (TOTAL_LABORATORIOS + TOTAL_INFECTADOS)) {
+                continuarOperando = false;
+            }
+        }
 
 
     }
@@ -169,9 +170,10 @@ void* f_infectado (void* argumento) {
     insumo_t insumo2Tipo;
     int insumo2Posicao;
     int produtoVerificados;
-    int i = (rand() % (int) TOTAL_PRODUTO_BANCADA);
+    int i = (rand() % TOTAL_PRODUTO_BANCADA);
     int quantidade;
     bool esperar;
+    int concluiram;
 
 
     switch(infectado->insumoInfinito){
@@ -234,65 +236,58 @@ void* f_infectado (void* argumento) {
 
             pthread_mutex_lock(infectado->bancadaMutex);
 
-            if ( (*infectado->atingiramObjetivo) == (TOTAL_INFECTADOS + TOTAL_LABORATORIOS) ) {
-                    continuarOperando = false;
-            } else {
 
-                insumo1Posicao = -1;
-                insumo2Posicao = -1;
-                
-                quantidade = -1;
-                
-                produtoVerificados = 0;
-                
-
-                while ( (insumo1Posicao == -1 || insumo2Posicao == -1) && (produtoVerificados <= TOTAL_PRODUTO_BANCADA) ) {
-                        
-                    if (sem_getvalue(&(infectado->bancada[i].quantidade), &quantidade) == 0) {
-
-                        if ((quantidade>0) && (infectado->bancada[i].tipo == insumo1Tipo) && (insumo1Posicao == -1)) {
-                            insumo1Posicao = i;
-                            // printf("\nINF %d tem insumo 1 do tipo ", infectado->id);
-                            // print_tipo_insumo(infectado->bancada[i].tipo);
-                            // printf(" na posicao %d", insumo1Posicao);
-                        } else if ((quantidade>0) && (infectado->bancada[i].tipo == insumo2Tipo) && (insumo2Posicao == -1)) {
-                            insumo2Posicao = i;
-                            // printf("\nINF %d tem insumo 2 do tipo ", infectado->id);
-                            // print_tipo_insumo(infectado->bancada[i].tipo);
-                            // printf(" na posicao %d", insumo2Posicao);
-                        }
-
-                        produtoVerificados++;
-                        i++;
-                        i = (i == TOTAL_PRODUTO_BANCADA) ? 0 : i;
-                    } 
+            insumo1Posicao = -1;
+            insumo2Posicao = -1;
             
-                }
+            quantidade = -1;
+            
+            produtoVerificados = 0;
+            
 
+            while ( (insumo1Posicao == -1 || insumo2Posicao == -1) && (produtoVerificados <= TOTAL_PRODUTO_BANCADA) ) {
+                    
+                if (sem_getvalue(&(infectado->bancada[i].quantidade), &quantidade) == 0) {
 
-                if ((insumo1Posicao != -1) && (insumo2Posicao != -1)) {
-
-                    sem_wait(&(infectado->bancada[insumo1Posicao].quantidade));
-                    sem_wait(&(infectado->bancada[insumo2Posicao].quantidade));
-
-                    infectado->ciclosAtual++;
-
-                    printf("\nINF %d fez a vacina %d vezes", infectado->id, infectado->ciclosAtual);
-
-                    if (infectado->ciclosAtual == infectado->ciclosMinimos) {
-                        (*infectado->atingiramObjetivo)++;
-                        printf("\nINF %d alcançou objetivo", infectado->id);
-
-                        if ( (*infectado->atingiramObjetivo) == (TOTAL_INFECTADOS + TOTAL_LABORATORIOS) ) {
-                            continuarOperando = false;
-                        }
+                    if ((quantidade>0) && (infectado->bancada[i].tipo == insumo1Tipo) && (insumo1Posicao == -1)) {
+                        insumo1Posicao = i;
+                        // printf("\nINF %d tem insumo 1 do tipo ", infectado->id);
+                        // print_tipo_insumo(infectado->bancada[i].tipo);
+                        // printf(" na posicao %d", insumo1Posicao);
+                    } else if ((quantidade>0) && (infectado->bancada[i].tipo == insumo2Tipo) && (insumo2Posicao == -1)) {
+                        insumo2Posicao = i;
+                        // printf("\nINF %d tem insumo 2 do tipo ", infectado->id);
+                        // print_tipo_insumo(infectado->bancada[i].tipo);
+                        // printf(" na posicao %d", insumo2Posicao);
                     }
 
-                    esperar = true;
+                    produtoVerificados++;
+                    i++;
+                    i = (i == TOTAL_PRODUTO_BANCADA) ? 0 : i;
+                } 
+        
+            }
 
+
+            if ((insumo1Posicao != -1) && (insumo2Posicao != -1)) {
+
+                sem_wait(&(infectado->bancada[insumo1Posicao].quantidade));
+                sem_wait(&(infectado->bancada[insumo2Posicao].quantidade));
+
+                infectado->ciclosAtual++;
+
+                printf("\nINF %d fez a vacina %d vezes", infectado->id, infectado->ciclosAtual);
+
+                if (infectado->ciclosAtual == infectado->ciclosMinimos) {
+                    printf("\nINF %d alcançou objetivo", infectado->id);
+                    sem_post(infectado->concluiram);
                 }
 
+                esperar = true;
+
             }
+
+            
 
             pthread_mutex_unlock(infectado->bancadaMutex);
 
@@ -306,10 +301,14 @@ void* f_infectado (void* argumento) {
             printf("\nINF %d não encontrou seus insumos", infectado->id); 
         }
 
-
         sleep(3);
-        
-    
+
+        if (sem_getvalue(infectado->concluiram, &concluiram) == 0) {
+            if (concluiram == (TOTAL_LABORATORIOS + TOTAL_INFECTADOS)) {
+                continuarOperando = false;
+            }
+        }
+
     }
     
     return NULL;
@@ -325,6 +324,7 @@ int main(int argc, char** argv) {
     laboratorio_t *laboratorios;
     infectado_t *infectados;
     pthread_mutex_t bancadaMutex;
+    sem_t concluiram;  
 
 
     /* VALIDAÇÃO DE ENTRADAS */
@@ -345,6 +345,7 @@ int main(int argc, char** argv) {
     bancada =  malloc(sizeof(produto_t) * TOTAL_PRODUTO_BANCADA);                
     infectados = malloc(sizeof(infectado_t) * TOTAL_INFECTADOS);                            
     pthread_mutex_init(&bancadaMutex, NULL);
+    sem_init(&concluiram, 0, 0);
 
 
 
@@ -368,6 +369,7 @@ int main(int argc, char** argv) {
         laboratorios[i].ciclosAtual = 0;
         laboratorios[i].atingiramObjetivo = &atingiramObjetivo;
         laboratorios[i].bancadaMutex = &bancadaMutex;
+        laboratorios[i].concluiram = &concluiram;
         laboratorios[i].produto1 = &(bancada[produto]);
         produto++;
         laboratorios[i].produto2 = &(bancada[produto]);
@@ -397,6 +399,7 @@ int main(int argc, char** argv) {
         infectados[i].ciclosMinimos = ciclosMinimos;       
         infectados[i].ciclosAtual = 0;         
         infectados[i].bancadaMutex = &bancadaMutex;
+        infectados[i].concluiram = &concluiram;
         infectados[i].atingiramObjetivo = &atingiramObjetivo;
         infectados[i].insumoInfinito = (insumo_t) i; 
 
