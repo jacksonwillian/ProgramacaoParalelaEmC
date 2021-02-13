@@ -87,7 +87,6 @@ void* f_laboratorio (void* argumento) {
     int quantidade1 = 0;
     int quantidade2 = 0;
     bool errorSemaforo = false;
-    bool esperar;
     int concluiram;
 
     while (continuarOperando == true) {
@@ -117,7 +116,7 @@ void* f_laboratorio (void* argumento) {
                 printf("\nLAB %d produziu %d vezes", laboratorio->id, laboratorio->ciclosAtual);
 
                 if (laboratorio->ciclosAtual == laboratorio->ciclosMinimos) {
-                    printf("\nLAB %d alcançou objetivo", laboratorio->id);
+                    printf("\nLAB %d atingiu objetivo", laboratorio->id);
                     sem_post(laboratorio->concluiram);
                 }
             }
@@ -158,7 +157,6 @@ void* f_infectado (void* argumento) {
     int produtoVerificados;
     int i = (rand() % TOTAL_PRODUTO_BANCADA);
     int quantidade;
-    bool esperar;
     int concluiram;
 
 
@@ -214,10 +212,7 @@ void* f_infectado (void* argumento) {
 
         if ((insumo1Posicao != -1) && (insumo2Posicao != -1)) {
         
-            esperar = false;
-
             pthread_mutex_lock(infectado->bancadaMutex);
-
 
             insumo1Posicao = -1;
             insumo2Posicao = -1;
@@ -261,7 +256,7 @@ void* f_infectado (void* argumento) {
                 printf("\nINF %d fez a vacina %d vezes", infectado->id, infectado->ciclosAtual);
 
                 if (infectado->ciclosAtual == infectado->ciclosMinimos) {
-                    printf("\nINF %d alcançou objetivo", infectado->id);
+                    printf("\nINF %d atingiu objetivo", infectado->id);
                     sem_post(infectado->concluiram);
                 }
             }
