@@ -49,7 +49,6 @@ typedef struct {
     sem_t *concluiram;      
 } infectado_t; 
 
-
 void print_tipo_insumo(insumo_t tipo_insumo) {
     switch(tipo_insumo) {
         case Virus: 
@@ -64,12 +63,10 @@ void print_tipo_insumo(insumo_t tipo_insumo) {
     }
 }
 
-
 void print_laboratorio(int id, insumo_t tipo_insumo) {
-    printf("\nLAB %d Disponibiliza ", id);
+    printf("\nLAB %d Tem ", id);
     print_tipo_insumo(tipo_insumo);
 }
-
 
 void print_infectado(int id, insumo_t tipo_insumo) {
     printf("\nINF %d Tem ", id);
@@ -77,8 +74,6 @@ void print_infectado(int id, insumo_t tipo_insumo) {
 }
 
 
-
-/* laboratorios produzem os insumos */
 void* f_laboratorio (void* argumento) {
 
     laboratorio_t *laboratorio = (laboratorio_t *)argumento;
@@ -86,58 +81,48 @@ void* f_laboratorio (void* argumento) {
     bool continuarOperando = true;
     int quantidade1 = 0;
     int quantidade2 = 0;
-    bool errorSemaforo = false;
     int concluiram;
 
     while (continuarOperando == true) {
         
-        errorSemaforo = false;
-
         quantidade1=0;
         quantidade2=0;
         
-        if ((sem_getvalue(&(laboratorio->produto1->quantidade), &quantidade1) != 0) 
-            || (sem_getvalue(&(laboratorio->produto2->quantidade), &quantidade2) != 0)) {
-            errorSemaforo = true;
-            printf("\nLAB %d erro ao verificar semaforo", laboratorio->id);
-        }        
-        
-        if ((errorSemaforo == false) && (quantidade1 == 0) && (quantidade2 == 0) ) {
+        if ((sem_getvalue(&(laboratorio->produto1->quantidade), &quantidade1)== 0) 
+            && (sem_getvalue(&(laboratorio->produto2->quantidade), &quantidade2) == 0)) {
 
-            pthread_mutex_lock(laboratorio->bancadaMutex);
+            if ((quantidade1 == 0) && (quantidade2 == 0) ) {
 
-            if ( (sem_post(&(laboratorio->produto1->quantidade)) != 0) 
-                || (sem_post(&(laboratorio->produto2->quantidade)) != 0)) {
-                printf("\nLAB %d erro ao produzir", laboratorio->id);
-            } else {
+                pthread_mutex_lock(laboratorio->bancadaMutex);
 
-                laboratorio->ciclosAtual++;
+                if ( (sem_post(&(laboratorio->produto1->quantidade)) != 0) 
+                    || (sem_post(&(laboratorio->produto2->quantidade)) != 0)) {
+                    printf("\nLAB %d erro ao produzir", laboratorio->id);
+                } else {
 
-                printf("\nLAB %d produziu %d vezes", laboratorio->id, laboratorio->ciclosAtual);
+                    laboratorio->ciclosAtual++;
 
-                if (laboratorio->ciclosAtual == laboratorio->ciclosMinimos) {
-                    printf("\nLAB %d atingiu objetivo", laboratorio->id);
-                    sem_post(laboratorio->concluiram);
+                    printf("\nLAB %d produziu %d vezes", laboratorio->id, laboratorio->ciclosAtual);
+
+                    if (laboratorio->ciclosAtual == laboratorio->ciclosMinimos) {
+                        printf("\nLAB %d atingiu objetivo", laboratorio->id);
+                        sem_post(laboratorio->concluiram);
+                    }
                 }
+                pthread_mutex_unlock(laboratorio->bancadaMutex);
+
+                sleep(0.8);
+
+            } else {
+                sleep(0.3);
             }
-            pthread_mutex_unlock(laboratorio->bancadaMutex);
-
-            sleep(0.6 + (rand() % 10)/10);
-
-        } else {
-            sleep((rand() % 10)/10);
         }
-
-  
-
 
         if (sem_getvalue(laboratorio->concluiram, &concluiram) == 0) {
             if (concluiram == (TOTAL_LABORATORIOS + TOTAL_INFECTADOS)) {
                 continuarOperando = false;
             }
         }
-
-
     }
     
     return NULL;
@@ -184,27 +169,18 @@ void* f_infectado (void* argumento) {
          
         produtoVerificados = 0;
         
-      
         while ( (insumo1Posicao == -1 || insumo2Posicao == -1) && (produtoVerificados <= TOTAL_PRODUTO_BANCADA) ) {
             
             if (sem_getvalue(&(infectado->bancada[i].quantidade), &quantidade) == 0) {
-
                 if ((quantidade>0) && (infectado->bancada[i].tipo == insumo1Tipo) && (insumo1Posicao == -1)) {
                     insumo1Posicao = i;
-                    // printf("\nINF %d tem insumo 1 do tipo ", infectado->id);
-                    // print_tipo_insumo(infectado->bancada[i].tipo);
-                    // printf(" na posicao %d", insumo1Posicao);
                 } else if ((quantidade>0) && (infectado->bancada[i].tipo == insumo2Tipo) && (insumo2Posicao == -1)) {
                     insumo2Posicao = i;
-                    // printf("\nINF %d tem insumo 2 do tipo ", infectado->id);
-                    // print_tipo_insumo(infectado->bancada[i].tipo);
-                    // printf(" na posicao %d", insumo2Posicao);
                 }
 
                 i++;
                 i = (i == TOTAL_PRODUTO_BANCADA) ? 0 : i;
                 produtoVerificados++;
-
             }
         
         }
@@ -228,14 +204,8 @@ void* f_infectado (void* argumento) {
 
                     if ((quantidade>0) && (infectado->bancada[i].tipo == insumo1Tipo) && (insumo1Posicao == -1)) {
                         insumo1Posicao = i;
-                        // printf("\nINF %d tem insumo 1 do tipo ", infectado->id);
-                        // print_tipo_insumo(infectado->bancada[i].tipo);
-                        // printf(" na posicao %d", insumo1Posicao);
                     } else if ((quantidade>0) && (infectado->bancada[i].tipo == insumo2Tipo) && (insumo2Posicao == -1)) {
                         insumo2Posicao = i;
-                        // printf("\nINF %d tem insumo 2 do tipo ", infectado->id);
-                        // print_tipo_insumo(infectado->bancada[i].tipo);
-                        // printf(" na posicao %d", insumo2Posicao);
                     }
 
                     produtoVerificados++;
@@ -263,10 +233,10 @@ void* f_infectado (void* argumento) {
 
             pthread_mutex_unlock(infectado->bancadaMutex);
 
-            sleep(0.6 + (rand() % 10)/10);
+            sleep(0.8);
 
         } else {
-            sleep((rand() % 10)/10);
+            sleep(0.3);
         }
 
         if (sem_getvalue(infectado->concluiram, &concluiram) == 0) {
@@ -333,6 +303,9 @@ int main(int argc, char** argv) {
         print_laboratorio(laboratorios[i].id, laboratorios[i].produto2->tipo);
     }
 
+    // PULA LINHA
+    printf("\n");
+
     /* INICIALIZA INFECTADOS */
     for (i=0; i < TOTAL_INFECTADOS; i++){
         infectados[i].id = i+1;
@@ -379,11 +352,12 @@ int main(int argc, char** argv) {
     }
 
 
-
     /* DESTRÓI MEMÓRIA ALOCADA */
-
-    //  falta remover semaforo do produtos, mesa, e concluiram objetivo
+    for (i=0; i < (TOTAL_PRODUTO_BANCADA); i++){
+        sem_destroy(&(bancada[i].quantidade));
+    }
     pthread_mutex_destroy(&bancadaMutex);
+    sem_destroy(&concluiram);
     free(laboratorios); 
     free(infectados); 
     free(bancada); 
