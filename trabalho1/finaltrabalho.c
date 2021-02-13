@@ -8,6 +8,7 @@
 
 #define TOTAL_INFECTADOS 3
 #define TOTAL_LABORATORIOS 3
+#define PRODUTO_POR_LABORATORIO 2
 #define TOTAL_INSUMOS 3
 
 typedef enum {
@@ -92,7 +93,6 @@ void* f_laboratorio (void* argumento) {
     int quantidade2 = 0;
     bool errorSemaforo = false;
 
-
     while (continuarOperando == true) {
         
         errorSemaforo = false;
@@ -126,7 +126,7 @@ void* f_laboratorio (void* argumento) {
                 if ( (*laboratorio->atingiramObjetivo) == (TOTAL_INFECTADOS + TOTAL_LABORATORIOS) ) {
                     continuarOperando = false;
                 }
-                
+
             }
 
             pthread_mutex_unlock(laboratorio->bancadaMutex);
@@ -135,6 +135,7 @@ void* f_laboratorio (void* argumento) {
             printf("\nLAB %d não usou a bancada", laboratorio->id);
         }
 
+        sleep(2);
 
     }
     
@@ -149,10 +150,72 @@ void* f_infectado (void* argumento) {
 
     printf("\nINF %d Chegou", infectado->id);
 
-    bool continuarOperando = false;
+    bool continuarOperando = true;
+    
+    insumo_t insumo1Tipo;
+    int insumo1Posicao;
+    insumo_t insumo2Tipo;
+    int insumo2Posicao;
+    bool visitouTodosLabs;
+    int i;
+    int quantidade = 0;
 
+
+    switch(infectado->insumoInfinito){
+        case Virus: {
+            insumo1Tipo = Injecao;
+            insumo2Tipo = Elementox;
+        } break;
+        case Injecao: {
+            insumo1Tipo = Virus;
+            insumo2Tipo = Elementox;
+        } break;
+        case Elementox: {
+            insumo1Tipo = Virus;
+            insumo2Tipo = Injecao; 
+        } break;
+    }
+ 
     while (continuarOperando == true) {
-           
+        
+        insumo1Posicao = -1;
+        insumo2Posicao = -1;
+        
+        quantidade = -1;
+         
+        visitouTodosLabs = false;
+        
+        // rande de 0 ate o tamanho do vetor
+        i = 0;
+        while ( (insumo1Posicao == -1 || insumo2Posicao == -1) && (visitouTodosLabs == false) ) {
+            
+            if (sem_getvalue(&(infectado->bancada[i].quantidade), &quantidade) == 0) {
+
+                if ((quantidade>0) && (infectado->bancada[i].tipo == insumo1Tipo) && (insumo1Posicao == -1)) {
+                    insumo1Posicao = i;
+                    printf("\nINF %d tem insumo 1 na posicao %d", infectado->id, insumo1Posicao);
+                } else if ((quantidade>0) && (infectado->bancada[i].tipo == insumo2Tipo) && (insumo2Posicao == -1)) {
+                    insumo2Posicao = i;
+                    printf("\nINF %d tem insumo 2 na posicao %d", infectado->id, insumo2Posicao);
+                }
+
+            }
+
+            // fazer um loop circular
+
+            if ( i == (TOTAL_LABORATORIOS*PRODUTO_POR_LABORATORIO)) {
+                visitouTodosLabs = true;
+            }
+
+            i++;
+            
+            sleep(2);
+            
+        }
+
+        continuarOperando = false;
+
+         
         pthread_mutex_lock(infectado->bancadaMutex);
 
 
@@ -168,7 +231,7 @@ void* f_infectado (void* argumento) {
 int main(int argc, char** argv) {
 
     /* DECLARAÇÃO DAS VARIÁVEIS */
-    int i, atingiramObjetivo, ciclosMinimos, produtoPorLaboratorio;
+    int i, atingiramObjetivo, ciclosMinimos;
     produto_t *bancada;
     laboratorio_t *laboratorios;
     infectado_t *infectados;
@@ -189,9 +252,8 @@ int main(int argc, char** argv) {
     /* INICIALIZAÇÃO DAS VARIÁVEIS */    
     ciclosMinimos = atoi(argv[1]);
     atingiramObjetivo = 0;
-    produtoPorLaboratorio = 2;
     laboratorios = malloc(sizeof(laboratorio_t) * TOTAL_LABORATORIOS);
-    bancada =  malloc(sizeof(produto_t) * (TOTAL_LABORATORIOS * produtoPorLaboratorio));                
+    bancada =  malloc(sizeof(produto_t) * (TOTAL_LABORATORIOS * PRODUTO_POR_LABORATORIO));                
     infectados = malloc(sizeof(infectado_t) * TOTAL_INFECTADOS);                            
     pthread_mutex_init(&bancadaMutex, NULL);
 
@@ -199,7 +261,7 @@ int main(int argc, char** argv) {
 
     /* INICIALIZA BANCADA */
 
-    for (i=0; i < (TOTAL_LABORATORIOS * produtoPorLaboratorio); i++){
+    for (i=0; i < (TOTAL_LABORATORIOS * PRODUTO_POR_LABORATORIO); i++){
         sem_init(&(bancada[i].quantidade), 0, 0);
         bancada[i].tipo = (insumo_t) i % TOTAL_INSUMOS;
     }
