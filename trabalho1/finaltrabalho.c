@@ -87,14 +87,55 @@ void* f_laboratorio (void* argumento) {
 
     printf("\nLAB %d Abriu", laboratorio->id);
 
-    bool continuarOperando = false;
+    bool continuarOperando = true;
+    int quantidade1 = 0;
+    int quantidade2 = 0;
+    bool errorSemaforo = false;
+
 
     while (continuarOperando == true) {
+        
+        errorSemaforo = false;
 
-        pthread_mutex_lock(laboratorio->bancadaMutex);
+        quantidade1=0;
+        quantidade2=0;
+        
+        if ((sem_getvalue(&(laboratorio->produto1->quantidade), &quantidade1) != 0) 
+            || (sem_getvalue(&(laboratorio->produto2->quantidade), &quantidade2) != 0)) {
+            errorSemaforo = true;
+            printf("\nLAB %d erro ao verificar semaforo", laboratorio->id);
+        }        
+        
+        if ((errorSemaforo == false) && (quantidade1 == 0) && (quantidade2 == 0) ) {
+
+            pthread_mutex_lock(laboratorio->bancadaMutex);
+
+            if ( (sem_post(&(laboratorio->produto1->quantidade)) != 0) 
+                || (sem_post(&(laboratorio->produto2->quantidade)) != 0)) {
+                printf("\nLAB %d erro ao produzir", laboratorio->id);
+            } else {
+
+                printf("\nLAB %d produziu %d vezes", laboratorio->id, laboratorio->ciclosAtual);
+
+                laboratorio->ciclosAtual++;
+
+                if (laboratorio->ciclosAtual == laboratorio->ciclosMinimos) {
+                    (*laboratorio->atingiramObjetivo)++;
+                }
+
+                if ( (*laboratorio->atingiramObjetivo) == (TOTAL_INFECTADOS + TOTAL_LABORATORIOS) ) {
+                    continuarOperando = false;
+                }
+                
+            }
+
+            pthread_mutex_unlock(laboratorio->bancadaMutex);
+
+        } else {
+            printf("\nLAB %d não usou a bancada", laboratorio->id);
+        }
 
 
-        pthread_mutex_unlock(laboratorio->bancadaMutex);
     }
     
     return NULL;
@@ -165,6 +206,8 @@ int main(int argc, char** argv) {
 
     /* INICIALIZA LABORATÓRIOS */
 
+    int quantidade1 = 0;
+    int quantidade2 = 0;
 
     int produto = 0;
     for (i=0; i < TOTAL_LABORATORIOS; i++){
@@ -179,6 +222,14 @@ int main(int argc, char** argv) {
         laboratorios[i].produto2 = &(bancada[produto]);
         produto++;
 
+        // ver o valor do semaforo tbm
+
+        if (sem_getvalue(&(laboratorios[i].produto1->quantidade), &quantidade1) == 0){
+            printf("\nquantidade1 >>%d", quantidade1);
+        }
+        if (sem_getvalue(&(laboratorios[i].produto2->quantidade), &quantidade2) == 0){
+            printf("\nquantidade2 >>%d", quantidade2);
+        }
         print_laboratorio(laboratorios[i].id, laboratorios[i].produto1->tipo);
         print_laboratorio(laboratorios[i].id, laboratorios[i].produto2->tipo);
 
