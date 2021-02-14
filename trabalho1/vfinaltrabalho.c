@@ -252,7 +252,7 @@ int main(int argc, char** argv) {
     /* VALIDAÇÃO DE ENTRADAS */
     if ( argc != 2 ) {
         printf("\nA quantidade de argumentos é inválida!\n");
-        printf("\nO primeiro argumento é o número mínimo de vezes que cada um deve realizar seu objetivo primordial.\n\n");
+        printf("\nO único argumento esperado é o número mínimo de vezes que cada um deve realizar seu objetivo primordial.\n\n");
         return -1;
     } else if ( atoi(argv[1]) < 1) {
         printf("\nO valor do argumento é inválido!\n\n");
