@@ -161,18 +161,11 @@ void* f_laboratorio (void* argumento) {
                 pthread_mutex_unlock(laboratorio->bancadaMutex);
 
                 #ifdef _WIN32
-                Sleep(800);
+                Sleep(900);
                 #else
-                sleep(0.8);
+                sleep(0.9);
                 #endif
-
-            } else {
-                #ifdef _WIN32
-                Sleep(200);
-                #else
-                sleep(0.2);
-                #endif
-            }
+            } 
         }
 
         if (sem_getvalue(laboratorio->atingiramObjetivo, &atingiramObjetivo) == 0) {
@@ -228,18 +221,11 @@ void* f_infectado (void* argumento) {
             pthread_mutex_unlock(infectado->bancadaMutex);
 
             #ifdef _WIN32
-            Sleep(800);
+            Sleep(900);
             #else
-            sleep(0.8);
+            sleep(0.9);
             #endif
-
-        } else {
-            #ifdef _WIN32
-            Sleep(200);
-            #else
-            sleep(0.2);
-            #endif
-        }
+        } 
 
         if (sem_getvalue(infectado->atingiramObjetivo, &atingiramObjetivo) == 0) {
             if (atingiramObjetivo == (TOTAL_LABORATORIOS + TOTAL_INFECTADOS)) {
