@@ -133,6 +133,7 @@ void* f_laboratorio (void* argumento) {
     int totalProduto1;
     int totalProduto2;
     int atingiramObjetivo;
+    int tempo = 0.3;
 
     while (continuarOperando == true) {
         
@@ -155,15 +156,16 @@ void* f_laboratorio (void* argumento) {
                     if (laboratorio->ciclosAtual == laboratorio->ciclosMinimos) {
                         printf("\nLAB %d atingiu objetivo", laboratorio->id);
                         sem_post(laboratorio->atingiramObjetivo);
+                        tempo = 0.9;
                     }
                 }
 
                 pthread_mutex_unlock(laboratorio->bancadaMutex);
 
                 #ifdef _WIN32
-                Sleep(900);
+                Sleep(tempo * 1000);
                 #else
-                sleep(0.9);
+                sleep(tempo);
                 #endif
             } 
         }
@@ -187,7 +189,8 @@ void* f_infectado (void* argumento) {
     int indiceProduto1;
     int indiceProduto2;
     int atingiramObjetivo;
-
+    int tempo = 0.3;
+    
     while (continuarOperando == true) {
 
         indiceProduto1 = -1;
@@ -214,6 +217,7 @@ void* f_infectado (void* argumento) {
                     if (infectado->ciclosAtual == infectado->ciclosMinimos) {
                         printf("\nINF %d atingiu objetivo", infectado->id);
                         sem_post(infectado->atingiramObjetivo);
+                        tempo = 0.9;
                     }
                 }
             }
@@ -221,9 +225,9 @@ void* f_infectado (void* argumento) {
             pthread_mutex_unlock(infectado->bancadaMutex);
 
             #ifdef _WIN32
-            Sleep(900);
+            Sleep(tempo * 1000);
             #else
-            sleep(0.9);
+            sleep(tempo);
             #endif
         } 
 
