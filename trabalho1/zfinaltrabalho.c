@@ -186,7 +186,6 @@ void* f_infectado (void* argumento) {
     int indiceProduto1;
     int indiceProduto2;
     int atingiramObjetivo;
-    int tempo = 0.6;
     
     while (continuarOperando == true) {
 
@@ -218,12 +217,6 @@ void* f_infectado (void* argumento) {
             }
 
             pthread_mutex_unlock(infectado->bancadaMutex);
-
-            #ifdef _WIN32
-            Sleep(tempo * 1000);
-            #else
-            sleep(tempo);
-            #endif
         } 
 
         if (sem_getvalue(infectado->atingiramObjetivo, &atingiramObjetivo) == 0) {
