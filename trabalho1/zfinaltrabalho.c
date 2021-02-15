@@ -56,7 +56,7 @@ typedef struct {
 } infectado_t; 
 
 
-/* realiza os prints das informações do infectado, labotório e tipo de insumo */
+/* realiza os prints das informações do infectado e labotório */
 void print_tipo_insumo(insumo_t tipo_insumo);
 void print_laboratorio(int id, insumo_t tipo_insumo);
 void print_infectado(int id, insumo_t tipo_insumo);
@@ -133,9 +133,7 @@ void* f_laboratorio (void* argumento) {
 
                 if ((sem_post(&(laboratorio->produto1->total)) == 0) && (sem_post(&(laboratorio->produto2->total)) == 0)) {
                     laboratorio->ciclosAtual++;
-                    // printf("\nLAB %d produziu %d vezes", laboratorio->id, laboratorio->ciclosAtual);
                     if (laboratorio->ciclosAtual == laboratorio->ciclosMinimos) {
-                        // printf("\nLAB %d atingiu objetivo", laboratorio->id);
                         sem_post(laboratorio->atingiramObjetivo);
                     }
                 }
@@ -191,9 +189,7 @@ void* f_infectado (void* argumento) {
                 if ((sem_wait(&(infectado->bancada[indiceProduto1].total)) == 0)
                     && (sem_wait(&(infectado->bancada[indiceProduto2].total)) == 0)) {
                     infectado->ciclosAtual++;
-                    // printf("\nINF %d fez a vacina %d vezes", infectado->id, infectado->ciclosAtual);
                     if (infectado->ciclosAtual == infectado->ciclosMinimos) {
-                        // printf("\nINF %d atingiu objetivo", infectado->id);
                         sem_post(infectado->atingiramObjetivo);
                     }
                 }
@@ -270,7 +266,6 @@ int main(int argc, char** argv) {
         produto++;
         // print_laboratorio(laboratorios[i].id, laboratorios[i].produto1->tipo);
         // print_laboratorio(laboratorios[i].id, laboratorios[i].produto2->tipo);
-        // printf("\n");
     }
 
 
@@ -287,7 +282,6 @@ int main(int argc, char** argv) {
         infectados[i].totalLaboratorios = totalLaboratorios;
         infectados[i].totalInfectados = totalInfectados;        
         // print_infectado(infectados[i].id, infectados[i].insumoInfinito);
-        // printf("\n\n");
     }
     
     /* EXECUTA AS THREADS */   
@@ -332,8 +326,19 @@ int main(int argc, char** argv) {
 
 
 
-/* funções extras para mostrar as informações na tela */
+/* funções extras para mostrar as informações do laboratorio e infectado */
 
+void print_laboratorio(int id, insumo_t tipo_insumo) {
+    printf("LAB %d Tem ", id);
+    print_tipo_insumo(tipo_insumo);
+    printf("\n");
+}
+
+void print_infectado(int id, insumo_t tipo_insumo) {
+    printf("INF %d Tem ", id);
+    print_tipo_insumo(tipo_insumo);
+    printf("\n");
+}
 
 void print_tipo_insumo(insumo_t tipo_insumo) {
     switch(tipo_insumo) {
@@ -347,14 +352,4 @@ void print_tipo_insumo(insumo_t tipo_insumo) {
             printf("elementox");
         break;
     }
-}
-
-void print_laboratorio(int id, insumo_t tipo_insumo) {
-    printf("\nLAB %d Tem ", id);
-    print_tipo_insumo(tipo_insumo);
-}
-
-void print_infectado(int id, insumo_t tipo_insumo) {
-    printf("\nINF %d Tem ", id);
-    print_tipo_insumo(tipo_insumo);
 }
