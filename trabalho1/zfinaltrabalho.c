@@ -55,29 +55,11 @@ typedef struct {
     int capacidadeDaBancada;        
 } infectado_t; 
 
-void print_tipo_insumo(insumo_t tipo_insumo) {
-    switch(tipo_insumo) {
-        case Virus: 
-            printf("virus");
-        break;
-        case Injecao: 
-            printf("injecao");
-        break;
-        case Elementox: 
-            printf("elementox");
-        break;
-    }
-}
 
-void print_laboratorio(int id, insumo_t tipo_insumo) {
-    printf("\nLAB %d Tem ", id);
-    print_tipo_insumo(tipo_insumo);
-}
-
-void print_infectado(int id, insumo_t tipo_insumo) {
-    printf("\nINF %d Tem ", id);
-    print_tipo_insumo(tipo_insumo);
-}
+/* realiza os prints das informações do infectado, labotório e tipo de insumo */
+void print_tipo_insumo(insumo_t tipo_insumo);
+void print_laboratorio(int id, insumo_t tipo_insumo);
+void print_infectado(int id, insumo_t tipo_insumo);
 
 
 void indicesProdutosFaltantes(produto_t * bancada, int capacidadeDaBancada, insumo_t insumoDoInfectado, int * indiceProduto1, int * indiceProduto2) {
@@ -345,4 +327,30 @@ int main(int argc, char** argv) {
     free(bancada); 
 
     return 0;
+}
+
+
+
+void print_tipo_insumo(insumo_t tipo_insumo) {
+    switch(tipo_insumo) {
+        case Virus: 
+            printf("virus");
+        break;
+        case Injecao: 
+            printf("injecao");
+        break;
+        case Elementox: 
+            printf("elementox");
+        break;
+    }
+}
+
+void print_laboratorio(int id, insumo_t tipo_insumo) {
+    printf("\nLAB %d Tem ", id);
+    print_tipo_insumo(tipo_insumo);
+}
+
+void print_infectado(int id, insumo_t tipo_insumo) {
+    printf("\nINF %d Tem ", id);
+    print_tipo_insumo(tipo_insumo);
 }
