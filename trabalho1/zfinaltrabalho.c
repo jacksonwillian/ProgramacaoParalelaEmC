@@ -62,6 +62,7 @@ void print_laboratorio(int id, insumo_t tipo_insumo);
 void print_infectado(int id, insumo_t tipo_insumo);
 
 
+/* preenche os indices da bancada que tem disponível os insumos que o infectado necessita */
 void indicesProdutosFaltantes(produto_t * bancada, int capacidadeDaBancada, insumo_t insumoDoInfectado, int * indiceProduto1, int * indiceProduto2) {
     
     insumo_t insumo1Tipo;
@@ -226,11 +227,11 @@ int main(int argc, char** argv) {
 
     /* VALIDAÇÃO DE ENTRADAS */
     if ( argc != 2 ) {
-        printf("\nA quantidade de argumentos é inválida!\n");
-        printf("\nO único argumento esperado é o número mínimo de vezes que cada um deve realizar seu objetivo primordial.\n\n");
+        printf("\nA quantidade de argumentos eh invalida!\n");
+        printf("\nO unico argumento esperado eh o numero minimo de vezes que cada um deve realizar seu objetivo primordial.\n\n");
         return -1;
     } else if ( atoi(argv[1]) < 1) {
-        printf("\nO valor do argumento é inválido!\n\n");
+        printf("\nO valor do argumento eh invalido!\n\n");
         return -1;
     }   
  
@@ -329,6 +330,9 @@ int main(int argc, char** argv) {
     return 0;
 }
 
+
+
+/* funções extras para mostrar as informações na tela */
 
 
 void print_tipo_insumo(insumo_t tipo_insumo) {
