@@ -117,7 +117,7 @@ void* f_laboratorio (void* argumento) {
     int totalProduto1;
     int totalProduto2;
     int atingiramObjetivo;
-    int tempo = 0.6;
+    int tempo = 0.3;
 
     while (continuarOperando == true) {
         
