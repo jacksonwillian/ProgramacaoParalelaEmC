@@ -1,6 +1,6 @@
 /* TRABALHO 1: Jackson Willian Silva Agostinho - 20172BSI0335 */ 
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #include <Windows.h>
 #else
 #include <unistd.h>
@@ -159,7 +159,7 @@ void* f_laboratorio (void* argumento) {
 
                 pthread_mutex_unlock(laboratorio->bancadaMutex);
 
-                #ifdef _WIN32
+                #if defined(_WIN32) || defined(__CYGWIN__)
                 Sleep(tempo * 1000);
                 #else
                 sleep(tempo);
@@ -285,12 +285,11 @@ int main(int argc, char** argv) {
         produto++;
         laboratorios[i].produto2 = &(bancada[produto]);
         produto++;
-        print_laboratorio(laboratorios[i].id, laboratorios[i].produto1->tipo);
-        print_laboratorio(laboratorios[i].id, laboratorios[i].produto2->tipo);
+        // print_laboratorio(laboratorios[i].id, laboratorios[i].produto1->tipo);
+        // print_laboratorio(laboratorios[i].id, laboratorios[i].produto2->tipo);
+        // printf("\n");
     }
 
-    // PULA LINHA
-    printf("\n");
 
     /* INICIALIZA INFECTADOS */
     for (i=0; i < totalInfectados; i++){
@@ -304,12 +303,10 @@ int main(int argc, char** argv) {
         infectados[i].capacidadeDaBancada = capacidadeDaBancada;
         infectados[i].totalLaboratorios = totalLaboratorios;
         infectados[i].totalInfectados = totalInfectados;        
-        print_infectado(infectados[i].id, infectados[i].insumoInfinito);
+        // print_infectado(infectados[i].id, infectados[i].insumoInfinito);
+        // printf("\n\n");
     }
-
-    // PULA LINHA
-    printf("\n");
-
+    
     /* EXECUTA AS THREADS */   
     for (i = 0; i < totalLaboratorios; i++) {
         pthread_create(&(laboratorios[i].thread), NULL, f_laboratorio, &(laboratorios[i]));
@@ -329,15 +326,12 @@ int main(int argc, char** argv) {
         pthread_join(infectados[i].thread, NULL);
     }
 
-    // PULA LINHA
-    printf("\n");
-
     /* APRESENTA O RESULTADO */
     for (i = 0; i < totalLaboratorios; i++) {
-        printf(">>> Laboratorio %d: %d\n", laboratorios[i].id, laboratorios[i].ciclosAtual); 
+        printf("Laboratorio %d: %d\n", laboratorios[i].id, laboratorios[i].ciclosAtual); 
     }
     for (i = 0; i < totalInfectados; i++) {
-        printf(">>> Infectado %d: %d\n", infectados[i].id, infectados[i].ciclosAtual); 
+        printf("Infectado %d: %d\n", infectados[i].id, infectados[i].ciclosAtual); 
     }
 
     /* DESTRÓI MEMÓRIA ALOCADA */
