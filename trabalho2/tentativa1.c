@@ -31,6 +31,7 @@ typedef struct {
 typedef struct {
     pthread_t thread;
     barbeiro_t * barbeiros;
+    sem_t * cadeiraEspera;
 } cliente_t;
 
 
@@ -74,6 +75,7 @@ int main(int argc, char** argv) {
 
     // inicializa cliente
     cliente->barbeiros = barbeiros;
+    cliente->cadeiraEspera = &cadeiraEspera;
 
 
     // cria barbeiros
@@ -84,14 +86,14 @@ int main(int argc, char** argv) {
     // cria cliente
     // contando semaforo
     atingiramObjetivo = 0;
-    tempoEspera = 3;
+    tempoEspera = 1;
     while(atingiramObjetivo < quantBarbeiros) {
 
         if (sem_getvalue(&totalAtingiramObjetivo, &atingiramObjetivo) != 0) {
             atingiramObjetivo = -1;
         }
 
-        pthread_create(&(cliente->thread), NULL, f_cliente, &cliente);
+        pthread_create(&(cliente->thread), NULL, f_cliente, cliente);
 
         #ifdef _WIN32
         Sleep(tempoEspera * 1000);
@@ -127,8 +129,21 @@ void* f_barbeiro(void* argumento) {
 void* f_cliente(void* argumento) {
 
     cliente_t *cliente = (cliente_t *)argumento;
+    
+    printf("cliente chegou\n");
+    if (sem_trywait(cliente->cadeiraEspera) == 0) {
+        printf("cliente entrou\n");
+    
+        while (true) {
+            
 
-    printf("cliente entrou\n");
+        }
+
+        sem_post(cliente->cadeiraEspera);
+        printf("cliente saiu\n");
+    } else {
+        printf("cliente não entrou\n");
+    }
 
     return NULL;
 }
