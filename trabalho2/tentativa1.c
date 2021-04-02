@@ -144,13 +144,18 @@ void* f_barbeiro(void* argumento) {
     barbeiro_t *barbeiro = (barbeiro_t *)argumento;
 
     printf("barbeiro id %d entrou\n", barbeiro->id);
-
+    int tempoEspera = 5;
     while (true) {
         sem_wait(barbeiro->barbeirosDormindo); /* barbeiro estah dormindo */
-        printf("barbeiro id %d cortou cabelo! \n", barbeiro->id);
+        printf("barbeiro %d cortou cabelo! \n", barbeiro->id);
         barbeiro->clientesAtendidos++;
+        #ifdef _WIN32
+        Sleep(tempoEspera * 1000);
+        #else
+        sleep(tempoEspera);
+        #endif
         sem_post(barbeiro->barbeiroLiberado); /* barbeiro estah liberado do cliente */
-        sem_post(barbeiro->totalBarbeirosLiberados); /* incrementa total barbeiros libeirados */
+        sem_post(barbeiro->totalBarbeirosLiberados); /* incrementa total barbeiros liberados */
     }
     
 
@@ -164,14 +169,14 @@ void* f_cliente(void* argumento) {
 
     bool clienteAtendido = false;
     int clienteID;
+    int tempoEspera = 5;
+
 
     // ID do cliente
     pthread_mutex_lock(cliente->mutexClienteID);
     clienteID = CLIENTE_ULTIMO_ID;
     CLIENTE_ULTIMO_ID++;
     pthread_mutex_unlock(cliente->mutexClienteID);
-
-    printf("cliente %d chegou\n", clienteID);
 
     if (sem_trywait(cliente->cadeiraEspera) == 0) { /* ocupa cadeira de espera se estiver livre */
         
@@ -193,18 +198,17 @@ void* f_cliente(void* argumento) {
                     sem_post(&(cliente->barbeirosDormindo[i])); /* acorda barbeiro */
                     sem_post(cliente->cadeiraEspera);  /* libera cadeira de espera */
                     clienteAtendido = true;
-                    printf("clinte %d atendido %d pelo barbeiro %d \n", clienteID, clienteAtendido, i);
+                    printf("clinte %d atendido pelo barbeiro %d \n", clienteID, i);
+                    #ifdef _WIN32
+                    Sleep(tempoEspera * 1000);
+                    #else
+                    sleep(tempoEspera);
+                    #endif
                     break;
                 }
-
             }
-
             // para cliente no mutex
-
-
         }
-
-       
 
         printf("cliente %d saiu\n", clienteID);
 
