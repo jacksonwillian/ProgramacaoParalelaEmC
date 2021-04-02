@@ -23,9 +23,11 @@ typedef enum {
 typedef struct {
     pthread_t thread;
     int id;    
-    sem_t * cadeiraBarbeiro;
+    sem_t * barbeiroLiberado;
+    sem_t * barbeirosDormindo;
     int quantMinimaClientes;
     int clientesAtendidos;
+    sem_t * totalBarbeirosLiberados;
     sem_t * totalAtingiramObjetivo;
     int totalBarbeiros;
 } barbeiro_t;
@@ -33,11 +35,12 @@ typedef struct {
 
 typedef struct {
     pthread_t thread;
-    sem_t * cadeirasBarbeiro;
+    sem_t * barbeirosLiberado;
     sem_t * cadeiraEspera;
+    sem_t * barbeirosDormindo;
     int totalBarbeiros;
     pthread_mutex_t *mutexClienteID;
-    pthread_mutex_t *mutexCadeirasOcupadas;
+    sem_t * totalBarbeirosLiberados;
 } cliente_t;
 
 
@@ -52,7 +55,8 @@ int main(int argc, char** argv) {
     int i, quantBarbeiros, quantCadeirasEspera, quantMinimaClientes, atingiramObjetivo, tempoEspera;
     barbeiro_t * barbeiros;
     cliente_t * cliente;
-    sem_t  * cadeirasBarbeiro;
+    sem_t  * barbeirosLiberado, * barbeirosDormindo;
+    sem_t totalBarbeirosLiberados;
     sem_t cadeiraEspera;
     sem_t totalAtingiramObjetivo;
     pthread_mutex_t mutexClienteID;
@@ -65,10 +69,12 @@ int main(int argc, char** argv) {
     quantCadeirasEspera = atoi(argv[2]);
     quantMinimaClientes = atoi(argv[3]);
     barbeiros =  malloc(sizeof(barbeiro_t) * quantBarbeiros); 
-    cadeirasBarbeiro =  malloc(sizeof(sem_t) * quantBarbeiros); 
+    barbeirosLiberado =  malloc(sizeof(sem_t) * quantBarbeiros); 
+    barbeirosDormindo =  malloc(sizeof(sem_t) * quantBarbeiros); 
     cliente =  malloc(sizeof(cliente_t)); 
-    sem_init(&cadeiraEspera, 0, quantCadeirasEspera);
+    sem_init(&cadeiraEspera, 0, quantCadeirasEspera);  /* todas cadeiras de espera começam livres */
     sem_init(&totalAtingiramObjetivo, 0, 0);
+    sem_init(&totalBarbeirosLiberados, 0, quantBarbeiros); /* todos barbeiros começam liberados */
     pthread_mutex_init(&mutexClienteID, NULL);
    
 
@@ -79,15 +85,20 @@ int main(int argc, char** argv) {
         barbeiros[i].clientesAtendidos = 0;
         barbeiros[i].totalAtingiramObjetivo = &totalAtingiramObjetivo;
         barbeiros[i].totalBarbeiros = quantBarbeiros;
-        sem_init(&(cadeirasBarbeiro[i]), 0, 0);
-        barbeiros[i].cadeiraBarbeiro = &(cadeirasBarbeiro[i]);
+        sem_init(&(barbeirosLiberado[i]), 0, 1);
+        sem_init(&(barbeirosDormindo[i]), 0, 0);
+        barbeiros[i].barbeiroLiberado = &(barbeirosLiberado[i]);
+        barbeiros[i].barbeirosDormindo = &(barbeirosDormindo[i]);
+        barbeiros[i].totalBarbeirosLiberados = &totalBarbeirosLiberados;
     } 
 
     // inicializa cliente
-    cliente->cadeirasBarbeiro = cadeirasBarbeiro;
+    cliente->barbeirosLiberado = barbeirosLiberado;
     cliente->cadeiraEspera = &cadeiraEspera;
+    cliente->barbeirosDormindo = barbeirosDormindo;
     cliente->totalBarbeiros = quantBarbeiros;
     cliente->mutexClienteID = &mutexClienteID;
+    cliente->totalBarbeirosLiberados = &totalBarbeirosLiberados;
 
 
     // cria barbeiros
@@ -135,9 +146,11 @@ void* f_barbeiro(void* argumento) {
     printf("barbeiro id %d entrou\n", barbeiro->id);
 
     while (true) {
-        sem_wait(&barbeiro->cadeiraBarbeiro);
+        sem_wait(barbeiro->barbeirosDormindo); /* barbeiro estah dormindo */
         printf("barbeiro id %d cortou cabelo! \n", barbeiro->id);
         barbeiro->clientesAtendidos++;
+        sem_post(barbeiro->barbeiroLiberado); /* barbeiro estah liberado do cliente */
+        sem_post(barbeiro->totalBarbeirosLiberados); /* incrementa total barbeiros libeirados */
     }
     
 
@@ -160,7 +173,7 @@ void* f_cliente(void* argumento) {
 
     printf("cliente %d chegou\n", clienteID);
 
-    if (sem_trywait(cliente->cadeiraEspera) == 0) {
+    if (sem_trywait(cliente->cadeiraEspera) == 0) { /* ocupa cadeira de espera se estiver livre */
         
         printf("cliente %d entrou\n", clienteID);
         
@@ -172,9 +185,13 @@ void* f_cliente(void* argumento) {
 
             // tentar entrar em um indice do barbeiro
 
+            sem_wait(cliente->totalBarbeirosLiberados);
+
             for (int i = 0; i<cliente->totalBarbeiros; i++) {
 
-                if (sem_trywait(&(cliente->cadeirasBarbeiro[i])) == 0) {
+                if (sem_trywait(&(cliente->barbeirosLiberado[i])) == 0) { /* vai até o barbeiro se ele estiver livre */
+                    sem_post(&(cliente->barbeirosDormindo[i])); /* acorda barbeiro */
+                    sem_post(cliente->cadeiraEspera);  /* libera cadeira de espera */
                     clienteAtendido = true;
                     printf("clinte %d atendido %d pelo barbeiro %d \n", clienteID, clienteAtendido, i);
                     break;
@@ -187,7 +204,7 @@ void* f_cliente(void* argumento) {
 
         }
 
-        sem_post(cliente->cadeiraEspera);
+       
 
         printf("cliente %d saiu\n", clienteID);
 
