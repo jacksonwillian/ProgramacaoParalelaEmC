@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// ultimo id
+int CLIENTE_ULTIMO_ID = 0;
+
 typedef enum {
     false = 0,
     true = 1
@@ -32,6 +35,7 @@ typedef struct {
     pthread_t thread;
     barbeiro_t * barbeiros;
     sem_t * cadeiraEspera;
+    pthread_mutex_t *mutexClienteID;
 } cliente_t;
 
 
@@ -48,7 +52,7 @@ int main(int argc, char** argv) {
     cliente_t * cliente;
     sem_t cadeiraEspera;
     sem_t totalAtingiramObjetivo;
-
+    pthread_mutex_t mutexClienteID;
 
     // validar entradas
 
@@ -61,6 +65,7 @@ int main(int argc, char** argv) {
     cliente =  malloc(sizeof(cliente_t)); 
     sem_init(&cadeiraEspera, 0, quantCadeirasEspera);
     sem_init(&totalAtingiramObjetivo, 0, 0);
+    pthread_mutex_init(&mutexClienteID, NULL);
    
 
     // inicializa barbeiros
@@ -76,6 +81,7 @@ int main(int argc, char** argv) {
     // inicializa cliente
     cliente->barbeiros = barbeiros;
     cliente->cadeiraEspera = &cadeiraEspera;
+    cliente->mutexClienteID = &mutexClienteID;
 
 
     // cria barbeiros
@@ -130,18 +136,21 @@ void* f_cliente(void* argumento) {
 
     cliente_t *cliente = (cliente_t *)argumento;
 
-    int clienteID = cliente->thread;
     bool clienteAtendido = false;
-    
+    int clienteID;
+
+    // ID do cliente
+    pthread_mutex_lock(cliente->mutexClienteID);
+    clienteID = CLIENTE_ULTIMO_ID;
+    CLIENTE_ULTIMO_ID++;
+    pthread_mutex_unlock(cliente->mutexClienteID);
+
     printf("cliente %d chegou\n", clienteID);
-    printf("cliente %d foi atendido %d\n", clienteID, clienteAtendido);
 
     if (sem_trywait(cliente->cadeiraEspera) == 0) {
         
         printf("cliente %d entrou\n", clienteID);
         
-        
-
         while (clienteAtendido == false) {
             
             // recebe sinal mutex
@@ -165,7 +174,7 @@ void* f_cliente(void* argumento) {
         // envia sinal mutex 
 
     } else {
-        printf("cliente não entrou\n");
+        printf("cliente %d não entrou\n", clienteID);
     }
 
     return NULL;
