@@ -89,12 +89,12 @@ int main(int argc, char** argv) {
     tempoEspera = 1;
     while(atingiramObjetivo < quantBarbeiros) {
 
+        pthread_create(&(cliente->thread), NULL, f_cliente, cliente);
+
         if (sem_getvalue(&totalAtingiramObjetivo, &atingiramObjetivo) != 0) {
             atingiramObjetivo = -1;
         }
-
-        pthread_create(&(cliente->thread), NULL, f_cliente, cliente);
-
+        
         #ifdef _WIN32
         Sleep(tempoEspera * 1000);
         #else
@@ -129,18 +129,41 @@ void* f_barbeiro(void* argumento) {
 void* f_cliente(void* argumento) {
 
     cliente_t *cliente = (cliente_t *)argumento;
-    
-    printf("cliente chegou\n");
-    if (sem_trywait(cliente->cadeiraEspera) == 0) {
-        printf("cliente entrou\n");
-    
-        while (true) {
-            
 
+    int clienteID = cliente->thread;
+    bool clienteAtendido = false;
+    
+    printf("cliente %d chegou\n", clienteID);
+    printf("cliente %d foi atendido %d\n", clienteID, clienteAtendido);
+
+    if (sem_trywait(cliente->cadeiraEspera) == 0) {
+        
+        printf("cliente %d entrou\n", clienteID);
+        
+        
+
+        while (clienteAtendido == false) {
+            
+            // recebe sinal mutex
+            // todas threads dormem aqui
+
+            // tentar entrar em um indice do barbeiro
+
+            printf("clinte %d que estava esperando foi atendido %d\n", clienteID, clienteAtendido);
+
+            #ifdef _WIN32
+            Sleep(1 * 1000);
+            #else
+            sleep(1);
+            #endif
         }
 
         sem_post(cliente->cadeiraEspera);
-        printf("cliente saiu\n");
+
+        printf("cliente %d saiu\n", clienteID);
+
+        // envia sinal mutex 
+
     } else {
         printf("cliente não entrou\n");
     }
