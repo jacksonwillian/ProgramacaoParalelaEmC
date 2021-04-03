@@ -218,16 +218,16 @@ void* f_cliente(void* argumento) {
         while( true ) {
 
             if (sem_trywait(&(cliente->cadeirasEspera[i])) == 0) { /* cliente tenta ocupar uma cadeira de espera */
+            
                 printf("cliente %d estar aguardando na cadeira %d\n", clienteID, i);
-                /* cliente ocupa uma cadeira de espera e sinaliza que não foi atendido */
+
                 sem_post(&(cliente->clienteAguardando[i])); 
                 
-                /* cliente vai permanecer sentado na cadeira de espera enquanto nao for atendido */   
-                
+                pthread_mutex_lock(&(cliente->cortouCabelo[i]));
                 sem_wait(&(cliente->cadeirasEspera[i]));
                 printf("cliente %d que estava na cadeira %d foi atendido! \n", clienteID, i);
                 sem_post(&(cliente->cadeirasEspera[i]));
-
+                pthread_mutex_unlock(&(cliente->cortouCabelo[i]));
 
                 break;
             }
