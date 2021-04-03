@@ -30,6 +30,7 @@ typedef struct {
     sem_t * totalBarbeirosLiberados;
     sem_t * totalAtingiramObjetivo;
     int totalBarbeiros;
+    double tempoCorteCabelo;
 } barbeiro_t;
 
 
@@ -41,6 +42,7 @@ typedef struct {
     int totalBarbeiros;
     pthread_mutex_t *mutexClienteID;
     sem_t * totalBarbeirosLiberados;
+    double tempoCorteCabelo;
 } cliente_t;
 
 
@@ -60,6 +62,7 @@ int main(int argc, char** argv) {
     sem_t cadeiraEspera;
     sem_t totalAtingiramObjetivo;
     pthread_mutex_t mutexClienteID;
+    double tempoCorteCabelo;
 
     // validar entradas
 
@@ -76,6 +79,7 @@ int main(int argc, char** argv) {
     sem_init(&totalAtingiramObjetivo, 0, 0);
     sem_init(&totalBarbeirosLiberados, 0, quantBarbeiros); /* todos barbeiros começam liberados */
     pthread_mutex_init(&mutexClienteID, NULL);
+    tempoCorteCabelo = 1;
    
 
     // inicializa barbeiros
@@ -90,7 +94,8 @@ int main(int argc, char** argv) {
         barbeiros[i].barbeiroLiberado = &(barbeirosLiberado[i]);
         barbeiros[i].barbeirosDormindo = &(barbeirosDormindo[i]);
         barbeiros[i].totalBarbeirosLiberados = &totalBarbeirosLiberados;
-    } 
+        barbeiros[i].tempoCorteCabelo = tempoCorteCabelo;
+    }
 
     // inicializa cliente
     cliente->barbeirosLiberado = barbeirosLiberado;
@@ -99,6 +104,7 @@ int main(int argc, char** argv) {
     cliente->totalBarbeiros = quantBarbeiros;
     cliente->mutexClienteID = &mutexClienteID;
     cliente->totalBarbeirosLiberados = &totalBarbeirosLiberados;
+    cliente->tempoCorteCabelo = tempoCorteCabelo;
 
 
     // cria barbeiros
@@ -131,9 +137,6 @@ int main(int argc, char** argv) {
         printf("barbeiro %d atendeu %d clientes\n", barbeiros[i].id, barbeiros[i].clientesAtendidos); 
     }
 
-
-    // liberar memoria
-
     return 0;
 }
 
@@ -144,21 +147,20 @@ void* f_barbeiro(void* argumento) {
     barbeiro_t *barbeiro = (barbeiro_t *)argumento;
 
     printf("barbeiro id %d entrou\n", barbeiro->id);
-    int tempoEspera = 5;
+
     while (true) {
         sem_wait(barbeiro->barbeirosDormindo); /* barbeiro estah dormindo */
-        printf("barbeiro %d cortou cabelo! \n", barbeiro->id);
+        printf("barbeiro %d atendeu um cliente! \n", barbeiro->id);
         barbeiro->clientesAtendidos++;
         #ifdef _WIN32
-        Sleep(tempoEspera * 1000);
+        Sleep(barbeiro->tempoCorteCabelo * 1000);
         #else
-        sleep(tempoEspera);
+        sleep(barbeiro->tempoCorteCabelo);
         #endif
-        sem_post(barbeiro->barbeiroLiberado); /* barbeiro estah liberado do cliente */
+        sem_post(barbeiro->barbeiroLiberado); /* barbeiro estah livre do cliente */
         sem_post(barbeiro->totalBarbeirosLiberados); /* incrementa total barbeiros liberados */
     }
     
-
     return NULL;
 }
 
@@ -169,8 +171,6 @@ void* f_cliente(void* argumento) {
 
     bool clienteAtendido = false;
     int clienteID;
-    int tempoEspera = 5;
-
 
     // ID do cliente
     pthread_mutex_lock(cliente->mutexClienteID);
@@ -184,35 +184,34 @@ void* f_cliente(void* argumento) {
         
         while (clienteAtendido == false) {
             
-            // recebe sinal mutex
-
-            // todas threads dormem aqui
-
-            // tentar entrar em um indice do barbeiro
-
             sem_wait(cliente->totalBarbeirosLiberados);
 
-            for (int i = 0; i<cliente->totalBarbeiros; i++) {
+            int i = (rand() % cliente->totalBarbeiros);
+            int barbeirosVerificados = 0;
+            
+            while (barbeirosVerificados < cliente->totalBarbeiros) {
 
                 if (sem_trywait(&(cliente->barbeirosLiberado[i])) == 0) { /* vai até o barbeiro se ele estiver livre */
-                    sem_post(&(cliente->barbeirosDormindo[i])); /* acorda barbeiro */
                     sem_post(cliente->cadeiraEspera);  /* libera cadeira de espera */
+                    sem_post(&(cliente->barbeirosDormindo[i])); /* acorda barbeiro */
                     clienteAtendido = true;
-                    printf("clinte %d atendido pelo barbeiro %d \n", clienteID, i);
                     #ifdef _WIN32
-                    Sleep(tempoEspera * 1000);
+                    Sleep(cliente->tempoCorteCabelo * 1000);
                     #else
-                    sleep(tempoEspera);
+                    sleep(cliente->tempoCorteCabelo);
                     #endif
+                    printf("clinte %d atendido pelo barbeiro %d \n", clienteID, i);
                     break;
                 }
+
+                i++;
+                i = (i == cliente->totalBarbeiros)? 0: i;
+                barbeirosVerificados++;
             }
-            // para cliente no mutex
+            
         }
 
         printf("cliente %d saiu\n", clienteID);
-
-        // envia sinal mutex 
 
     } else {
         printf("cliente %d não entrou\n", clienteID);
