@@ -41,7 +41,8 @@ typedef struct {
     sem_t * cadeirasEspera;
     sem_t * clienteAguardando;
     int totalCadeirasEspera;
-    pthread_mutex_t *mutexClienteID;
+    pthread_mutex_t * mutexClienteID;
+    pthread_mutex_t * cortouCabelo;
 } cliente_t;
 
 
@@ -61,6 +62,7 @@ int main(int argc, char** argv) {
     sem_t * cadeirasEspera; /* representa cada uma das cadeiras de espera dentro da barbearia */
     sem_t * clienteAguardando; 
     sem_t totalAtingiramObjetivo;
+    pthread_mutex_t * cortouCabelo;
     pthread_mutex_t mutexClienteID; /* usado apenas para debug, garantir ID unico do cliente */
 
     // validar entradas
@@ -73,17 +75,20 @@ int main(int argc, char** argv) {
     barbeiros =  malloc(sizeof(barbeiro_t) * quantBarbeiros);
     cadeirasEspera =  malloc(sizeof(sem_t) * quantCadeirasEspera); 
     clienteAguardando =  malloc(sizeof(sem_t) * quantCadeirasEspera); 
+    cortouCabelo =  malloc(sizeof(pthread_mutex_t) * quantCadeirasEspera); 
     cliente =  malloc(sizeof(cliente_t)); 
     sem_init(&quantCadeirasEsperaDesocupada, 0, quantCadeirasEspera);  /* todas cadeiras de espera começam desocupadas */
     sem_init(&totalClienteSemAtender, 0, 0);  /* a barbearia começa com nenhum cliente sem atender */
     sem_init(&totalAtingiramObjetivo, 0, 0);
     pthread_mutex_init(&mutexClienteID, NULL);
+    
    
     // inicializa cadeira de espera
     for (i=0; i < quantCadeirasEspera; i++) {
         // cadeiras de espera começam desocupadas, isto eh, tem valor um
         sem_init(&(cadeirasEspera[i]), 0, 1);
         sem_init(&(clienteAguardando[i]), 0, 0);
+        pthread_mutex_init(&(cortouCabelo[i]), NULL);
     }
 
     // inicializa barbeiros
@@ -106,6 +111,7 @@ int main(int argc, char** argv) {
     cliente->mutexClienteID = &mutexClienteID;
     cliente->clienteAguardando = clienteAguardando;
     cliente->totalCadeirasEspera = quantCadeirasEspera;
+    cliente->cortouCabelo = cortouCabelo;
 
 
 
@@ -162,23 +168,20 @@ void* f_barbeiro(void* argumento) {
         i = 0;
         while (true) {
 
-            printf("barbeiro %d verifica cada cliente! \n", barbeiro->id);
+            // printf("barbeiro %d verifica cada cliente! \n", barbeiro->id);
 
             if (sem_trywait(&(barbeiro->clienteAguardando[i])) == 0) { /* verifica qual cliente não foi atendido */
                 printf("barbeiro %d chama cliente da cadeira %d! \n", barbeiro->id, i);
                 /* barbeiro chama o cliente que não foi atendido para sentar na sua cadeira */
 
                 #ifdef _WIN32
-                Sleep(2 * 1000);
+                Sleep(1 * 1000);
                 #else
-                sleep(2);
+                sleep(1);
                 #endif
-                sem_post(&(barbeiro->clienteAguardando[i]));
-                sem_post(&(barbeiro->cadeirasEspera[i]));  // libera uma das cadeiras de espera
-
-                printf("barbeiro %d atendeu um cliente! \n", barbeiro->id);
+                printf("barbeiro %d atendeu um cliente que estava cadeira %d! \n", barbeiro->id, i);
+                sem_post(&(barbeiro->cadeirasEspera[i]));  // libera uma das cadeiras de esper a
                 barbeiro->clientesAtendidos++;
-
                 break;
             }
 
@@ -209,6 +212,8 @@ void* f_cliente(void* argumento) {
         
         printf("cliente %d entrou\n", clienteID);
 
+        sem_post(cliente->totalClienteSemAtender);
+
         int i = 0;
         while( true ) {
 
@@ -216,10 +221,14 @@ void* f_cliente(void* argumento) {
                 printf("cliente %d estar aguardando na cadeira %d\n", clienteID, i);
                 /* cliente ocupa uma cadeira de espera e sinaliza que não foi atendido */
                 sem_post(&(cliente->clienteAguardando[i])); 
-                sem_post(cliente->totalClienteSemAtender);
+                
                 /* cliente vai permanecer sentado na cadeira de espera enquanto nao for atendido */   
-                sem_wait(&(cliente->cadeirasEspera[i]));    
+                
+                sem_wait(&(cliente->cadeirasEspera[i]));
                 printf("cliente %d que estava na cadeira %d foi atendido! \n", clienteID, i);
+                sem_post(&(cliente->cadeirasEspera[i]));
+
+
                 break;
             }
 
