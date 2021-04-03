@@ -152,25 +152,39 @@ void* f_barbeiro(void* argumento) {
     barbeiro_t *barbeiro = (barbeiro_t *)argumento;
 
     printf("barbeiro id %d entrou\n", barbeiro->id);
+    int i;
 
     while (true) {
     
-        for (int i = 0; i < barbeiro->totalCadeirasEspera; i++) {
+        sem_wait(barbeiro->totalClienteSemAtender);
+        printf("barbeiro %d estah acordado! \n", barbeiro->id);
+        
+        i = 0;
+        while (true) {
+
             printf("barbeiro %d verifica cada cliente! \n", barbeiro->id);
+
             if (sem_trywait(&(barbeiro->clienteAguardando[i])) == 0) { /* verifica qual cliente não foi atendido */
-                printf("barbeiro %d chama cliente! \n", barbeiro->id);
+                printf("barbeiro %d chama cliente da cadeira %d! \n", barbeiro->id, i);
                 /* barbeiro chama o cliente que não foi atendido para sentar na sua cadeira */
-                sem_post(&(barbeiro->cadeirasEspera[i]));  // libera uma das cadeiras de espera
-                /* barbeiro acabou de cortar o cabelo do cliente e sinaliza que terminou */
+
+                #ifdef _WIN32
+                Sleep(2 * 1000);
+                #else
+                sleep(2);
+                #endif
                 sem_post(&(barbeiro->clienteAguardando[i]));
+                sem_post(&(barbeiro->cadeirasEspera[i]));  // libera uma das cadeiras de espera
 
                 printf("barbeiro %d atendeu um cliente! \n", barbeiro->id);
                 barbeiro->clientesAtendidos++;
-            }
-        }
 
-        sem_wait(barbeiro->totalClienteSemAtender);
-        printf("barbeiro %d estah acordado! \n", barbeiro->id);
+                break;
+            }
+
+            i++;
+            i = (i == barbeiro->totalCadeirasEspera) ? 0 : i;
+        }
 
     }
     
@@ -195,26 +209,29 @@ void* f_cliente(void* argumento) {
         
         printf("cliente %d entrou\n", clienteID);
 
-        for(int i = 0; i < cliente->totalCadeirasEspera; i++) {
+        int i = 0;
+        while( true ) {
+
             if (sem_trywait(&(cliente->cadeirasEspera[i])) == 0) { /* cliente tenta ocupar uma cadeira de espera */
-                printf("cliente %d estar aguardando\n", clienteID);
+                printf("cliente %d estar aguardando na cadeira %d\n", clienteID, i);
                 /* cliente ocupa uma cadeira de espera e sinaliza que não foi atendido */
                 sem_post(&(cliente->clienteAguardando[i])); 
                 sem_post(cliente->totalClienteSemAtender);
                 /* cliente vai permanecer sentado na cadeira de espera enquanto nao for atendido */   
-                sem_wait(&(cliente->cadeirasEspera[i]));
-                /* cliente estar sendo atendido na cadeira do barbeiro e aguarda o barbeiro terminar o trabalho */
-                sem_wait(&(cliente->clienteAguardando[i]));     
+                sem_wait(&(cliente->cadeirasEspera[i]));    
+                printf("cliente %d que estava na cadeira %d foi atendido! \n", clienteID, i);
                 break;
-                printf("cliente %d foi atendido! \n", clienteID);
             }
+
+            i++;
+            i = (i == cliente->totalCadeirasEspera) ? 0 : i;
         }
 
         sem_post(cliente->quantCadeirasEsperaDesocupada);
         printf("cliente %d saiu da barbearia\n", clienteID);
 
     } else {
-        printf("cliente %d não entrou na barbearia\n", clienteID);
+        printf("cliente %d não entrou na barbearia!\n", clienteID);
     }
 
     return NULL;
