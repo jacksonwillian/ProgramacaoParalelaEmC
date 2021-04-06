@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
 void* f_barbeiro(void* argumento) {
 
     barbeiro_t *barbeiro = (barbeiro_t *)argumento;
-    int tempoCorteCabelo = 5;
+    int tempoCorteCabelo = 10;
     printf("barbeiro id %d entrou\n", barbeiro->id);
 
     while (true) {
@@ -162,6 +162,13 @@ void* f_barbeiro(void* argumento) {
         barbeiro->clientesAtendidos++;
         sem_post(barbeiro->barbeiroLiberado); /* barbeiro estah livre do cliente */
         sem_post(barbeiro->totalBarbeirosLiberados); /* incrementa total barbeiros liberados */
+
+        // mutex
+        // pode chegar o momento que os barbeiros liberam os ultimos clientes ao mesmo tempo, e o semaforo de cliente sem atender é maior que zero
+        // ler semaforo total de clientes sem atender
+        // ler semaforo total de barbeiros que concluiram objetivoMutex
+        // dar o post no fim do programa
+
     }
     
     return NULL;
