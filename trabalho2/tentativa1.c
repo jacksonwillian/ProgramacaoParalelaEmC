@@ -44,6 +44,7 @@ typedef struct {
     sem_t * totalAtingiramObjetivo;
     pthread_mutex_t * mutexClienteID;
     sem_t * barbeariaFechou;    
+    sem_t * totalClientesDentroBarbearia;    
     int totalBarbeiros;
     int totalCadeirasEspera;
 } cliente_t;
@@ -65,6 +66,7 @@ int main(int argc, char** argv) {
     sem_t cadeiraEspera;
     sem_t totalAtingiramObjetivo;
     sem_t barbeariaFechou;
+    sem_t totalClientesDentroBarbearia;
     pthread_mutex_t mutexClienteID;
 
 
@@ -84,6 +86,7 @@ int main(int argc, char** argv) {
     sem_init(&totalAtingiramObjetivo, 0, 0);
     sem_init(&totalBarbeirosLiberados, 0, quantBarbeiros); /* todos barbeiros começam liberados */
     sem_init(&barbeariaFechou, 0, 0);
+    sem_init(&totalClientesDentroBarbearia, 0, 0);
     pthread_mutex_init(&mutexClienteID, NULL);
    
 
@@ -113,6 +116,7 @@ int main(int argc, char** argv) {
     cliente->totalBarbeirosLiberados = &totalBarbeirosLiberados;
     cliente->totalAtingiramObjetivo = &totalAtingiramObjetivo;
     cliente->barbeariaFechou = &barbeariaFechou;
+    cliente->totalClientesDentroBarbearia = &totalClientesDentroBarbearia;
     cliente->totalCadeirasEspera = quantCadeirasEspera;
 
 
@@ -129,15 +133,15 @@ int main(int argc, char** argv) {
 
         pthread_create(&(cliente->thread), NULL, f_cliente, cliente);
 
-        if (sem_getvalue(&totalAtingiramObjetivo, &atingiramObjetivo) != 0) {
-            atingiramObjetivo = -1;
-        }
-        
         #ifdef _WIN32
         Sleep(tempoEspera * 1000);
         #else
         sleep(tempoEspera);
         #endif
+
+        if (sem_getvalue(&totalAtingiramObjetivo, &atingiramObjetivo) != 0) {
+            atingiramObjetivo = -1;
+        }
     }
 
 
@@ -161,7 +165,7 @@ int main(int argc, char** argv) {
 void* f_barbeiro(void* argumento) {
 
     barbeiro_t *barbeiro = (barbeiro_t *)argumento;
-    int tempoCorteCabelo = 2;
+    int tempoCorteCabelo = 1;
     printf("barbeiro id %d entrou\n", barbeiro->id);
 
     while (true) {
@@ -179,6 +183,7 @@ void* f_barbeiro(void* argumento) {
         sem_post(barbeiro->totalBarbeirosLiberados); /* incrementa total barbeiros liberados */
         
         if (barbeiro->clientesAtendidos == barbeiro->quantMinimaClientes) {
+            printf("barbeiro %d atingiu seu objetivo!\n", barbeiro->id);
             sem_post(barbeiro->totalAtingiramObjetivo);
         }
 
@@ -204,6 +209,8 @@ void* f_cliente(void* argumento) {
     if (sem_trywait(cliente->cadeiraEspera) == 0) { /* ocupa cadeira de espera se estiver livre */
         
         printf("cliente %d entrou\n", clienteID);
+        
+        sem_post(cliente->totalClientesDentroBarbearia);
         
         while (clienteAtendido == false) {
 
@@ -234,9 +241,11 @@ void* f_cliente(void* argumento) {
         } // fim while
 
 
+        sem_wait(cliente->totalClientesDentroBarbearia);
+
         /* Sinalizar na main que o ultimo cliente saiu da barbearia apos todos barbeiros atingirem o objetivo */
         pthread_mutex_lock(cliente->mutexClienteID);
- 
+
         int totalBarbeirosConcluiramObjetivo = 0;
 
         /* se sem_getvalue retornar erro, tente novamente no while */
@@ -244,12 +253,12 @@ void* f_cliente(void* argumento) {
         
         if (totalBarbeirosConcluiramObjetivo == cliente->totalBarbeiros) {
 
-            int totalCadeirasLivres = 0;
+            int totalClientesNaBarbearia = 0;
             
             /* se sem_getvalue retornar erro, tente novamente no while */
-            while (sem_getvalue(cliente->cadeiraEspera, &totalCadeirasLivres) != 0); 
+            while (sem_getvalue(cliente->totalClientesDentroBarbearia, &totalClientesNaBarbearia) != 0); 
     
-            if (totalCadeirasLivres == cliente->totalCadeirasEspera) {
+            if (totalClientesNaBarbearia == 0) {
                 sem_post(cliente->barbeariaFechou);
             }
         }
