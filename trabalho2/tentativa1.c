@@ -46,7 +46,6 @@ typedef struct {
     sem_t * barbeariaFechou;    
     sem_t * totalClientesDentroBarbearia;    
     int totalBarbeiros;
-    int totalCadeirasEspera;
 } cliente_t;
 
 
@@ -58,7 +57,8 @@ void* f_cliente(void* argumento);
 int main(int argc, char** argv) {
     // a soma do total de clientes atentidos deve ser um tipo long
 
-    int i, quantBarbeiros, quantCadeirasEspera, quantMinimaClientes, atingiramObjetivo, tempoEspera;
+    int i, quantBarbeiros, quantCadeirasEspera, quantMinimaClientes, atingiramObjetivo;
+    double tempoEspera;
     barbeiro_t * barbeiros;
     cliente_t * cliente;
     sem_t  * barbeirosLiberado, * barbeirosAcordado, * barbeirosAtendeuCliente;
@@ -117,7 +117,6 @@ int main(int argc, char** argv) {
     cliente->totalAtingiramObjetivo = &totalAtingiramObjetivo;
     cliente->barbeariaFechou = &barbeariaFechou;
     cliente->totalClientesDentroBarbearia = &totalClientesDentroBarbearia;
-    cliente->totalCadeirasEspera = quantCadeirasEspera;
 
 
     // cria barbeiros
@@ -153,7 +152,6 @@ int main(int argc, char** argv) {
 
     // join no babeiro
     for (i = 0; i < quantBarbeiros; i++) {
-        // pthread_join(barbeiros[i].thread, NULL);
         printf("barbeiro %d atendeu %d clientes\n", barbeiros[i].id, barbeiros[i].clientesAtendidos); 
     }
 
@@ -165,7 +163,7 @@ int main(int argc, char** argv) {
 void* f_barbeiro(void* argumento) {
 
     barbeiro_t *barbeiro = (barbeiro_t *)argumento;
-    int tempoCorteCabelo = 1;
+    double tempoCorteCabelo = 0;
     printf("barbeiro id %d entrou\n", barbeiro->id);
 
     while (true) {
@@ -207,10 +205,11 @@ void* f_cliente(void* argumento) {
     pthread_mutex_unlock(cliente->mutexClienteID);
 
     if (sem_trywait(cliente->cadeiraEspera) == 0) { /* ocupa cadeira de espera se estiver livre */
+
+        sem_post(cliente->totalClientesDentroBarbearia);
         
         printf("cliente %d entrou\n", clienteID);
         
-        sem_post(cliente->totalClientesDentroBarbearia);
         
         while (clienteAtendido == false) {
 
