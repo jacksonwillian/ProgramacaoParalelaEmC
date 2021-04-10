@@ -1,11 +1,6 @@
 /* TRABALHO 1: Jackson Willian Silva Agostinho - 20172BSI0335 */ 
 
-#ifdef _WIN32
 #include <Windows.h>
-#else
-#include <unistd.h>
-#endif
-
 #include <pthread.h> 
 #include <semaphore.h>
 #include <stdio.h>
@@ -128,12 +123,6 @@ int main(int argc, char** argv) {
     atingiramObjetivo = 0;
     while(atingiramObjetivo < quantBarbeiros) {
 
-        #ifdef _WIN32
-        Sleep(1000);
-        #else
-        sleep(1);
-        #endif
-
         pthread_create(&(cliente->thread), NULL, f_cliente, cliente);
 
         if (sem_getvalue(&totalAtingiramObjetivo, &atingiramObjetivo) != 0) {
@@ -164,6 +153,8 @@ void* f_barbeiro(void* argumento) {
     while (true) {
         sem_wait(barbeiro->barbeirosAcordado); /* barbeiro estah dormindo */
         printf("barbeiro %d acordou!\n", barbeiro->id);
+
+        Sleep(100);
 
         barbeiro->clientesAtendidos++;
 
@@ -203,7 +194,6 @@ void* f_cliente(void* argumento) {
         
         printf("cliente %d entrou\n", clienteID);
         
-        
         while (clienteAtendido == false) {
 
             sem_wait(cliente->totalBarbeirosLiberados);
@@ -235,9 +225,7 @@ void* f_cliente(void* argumento) {
 
         sem_wait(cliente->totalClientesDentroBarbearia);
 
-        int esperando = 0;
-        while (sem_getvalue(cliente->cadeiraEspera, &esperando) != 0); 
-        printf("\nEsperando: %d\n", esperando);
+        printf("cliente %d saiu\n", clienteID);        
 
         pthread_mutex_lock(cliente->mutexClienteID);
 
@@ -260,8 +248,6 @@ void* f_cliente(void* argumento) {
         }
 
         pthread_mutex_unlock(cliente->mutexClienteID);
-
-        printf("cliente %d saiu\n", clienteID);
 
     } else {
         printf("cliente %d não entrou\n", clienteID);
