@@ -58,7 +58,6 @@ int main(int argc, char** argv) {
     // a soma do total de clientes atentidos deve ser um tipo long
 
     int i, quantBarbeiros, quantCadeirasEspera, quantMinimaClientes, atingiramObjetivo;
-    double tempoEspera;
     barbeiro_t * barbeiros;
     cliente_t * cliente;
     sem_t  * barbeirosLiberado, * barbeirosAcordado, * barbeirosAtendeuCliente;
@@ -127,23 +126,20 @@ int main(int argc, char** argv) {
     // cria cliente
     // contando semaforo
     atingiramObjetivo = 0;
-    tempoEspera = 0.5;
     while(atingiramObjetivo < quantBarbeiros) {
+
+        #ifdef _WIN32
+        Sleep(1000);
+        #else
+        sleep(1);
+        #endif
 
         pthread_create(&(cliente->thread), NULL, f_cliente, cliente);
 
-        #ifdef _WIN32
-        Sleep(tempoEspera * 1000);
-        #else
-        sleep(tempoEspera);
-        #endif
-
         if (sem_getvalue(&totalAtingiramObjetivo, &atingiramObjetivo) != 0) {
             atingiramObjetivo = -1;
-        }
+        } 
     }
-
-
 
     // espera o sinal que avisa que ultimo cliente foi atentido
     printf("Espera ultimo cliente ser atendido\n");
@@ -181,7 +177,7 @@ void* f_barbeiro(void* argumento) {
 
         sem_post(barbeiro->barbeiroLiberado); /* barbeiro estah livre do cliente */
         sem_post(barbeiro->totalBarbeirosLiberados); /* incrementa total barbeiros liberados */
-        
+
     }
     
     return NULL;
@@ -238,6 +234,10 @@ void* f_cliente(void* argumento) {
 
 
         sem_wait(cliente->totalClientesDentroBarbearia);
+
+        int esperando = 0;
+        while (sem_getvalue(cliente->cadeiraEspera, &esperando) != 0); 
+        printf("\nEsperando: %d\n", esperando);
 
         pthread_mutex_lock(cliente->mutexClienteID);
 
