@@ -38,6 +38,7 @@ typedef struct {
     sem_t * totalBarbeirosLiberados;
     sem_t * totalAtingiramObjetivo;
     pthread_mutex_t * mutexClienteID;
+    pthread_mutex_t * mutexUltimoCliente;
     sem_t * barbeariaFechou;    
     sem_t * totalClientesDentroBarbearia;    
     int totalBarbeiros;
@@ -62,6 +63,7 @@ int main(int argc, char** argv) {
     sem_t barbeariaFechou;
     sem_t totalClientesDentroBarbearia;
     pthread_mutex_t mutexClienteID;
+    pthread_mutex_t mutexUltimoCliente;
 
 
     // validar entradas
@@ -82,6 +84,7 @@ int main(int argc, char** argv) {
     sem_init(&barbeariaFechou, 0, 0);
     sem_init(&totalClientesDentroBarbearia, 0, 0);
     pthread_mutex_init(&mutexClienteID, NULL);
+    pthread_mutex_init(&mutexUltimoCliente, NULL);
    
 
     // inicializa barbeiros
@@ -107,6 +110,7 @@ int main(int argc, char** argv) {
     cliente->barbeirosAtendeuCliente = barbeirosAtendeuCliente;
     cliente->totalBarbeiros = quantBarbeiros;
     cliente->mutexClienteID = &mutexClienteID;
+    cliente->mutexUltimoCliente = &mutexUltimoCliente;
     cliente->totalBarbeirosLiberados = &totalBarbeirosLiberados;
     cliente->totalAtingiramObjetivo = &totalAtingiramObjetivo;
     cliente->barbeariaFechou = &barbeariaFechou;
@@ -154,7 +158,7 @@ void* f_barbeiro(void* argumento) {
         sem_wait(barbeiro->barbeirosAcordado); /* barbeiro estah dormindo */
         printf("barbeiro %d acordou!\n", barbeiro->id);
 
-        Sleep(100);
+        // Sleep(100);
 
         barbeiro->clientesAtendidos++;
 
@@ -227,7 +231,7 @@ void* f_cliente(void* argumento) {
 
         printf("cliente %d saiu\n", clienteID);        
 
-        pthread_mutex_lock(cliente->mutexClienteID);
+        pthread_mutex_lock(cliente->mutexUltimoCliente);
 
         int totalBarbeirosConcluiramObjetivo = 0;
 
@@ -247,7 +251,7 @@ void* f_cliente(void* argumento) {
             }
         }
 
-        pthread_mutex_unlock(cliente->mutexClienteID);
+        pthread_mutex_unlock(cliente->mutexUltimoCliente);
 
     } else {
         printf("cliente %d não entrou\n", clienteID);
