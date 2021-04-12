@@ -158,8 +158,6 @@ void* f_barbeiro(void* argumento) {
         sem_wait(barbeiro->barbeirosAcordado); /* barbeiro estah dormindo */
         printf("barbeiro %d acordou!\n", barbeiro->id);
 
-        // Sleep(100);
-
         barbeiro->clientesAtendidos++;
 
         if (barbeiro->clientesAtendidos == barbeiro->quantMinimaClientes) {
@@ -254,7 +252,7 @@ void* f_cliente(void* argumento) {
         pthread_mutex_unlock(cliente->mutexUltimoCliente);
 
     } else {
-        printf("cliente %d não entrou\n", clienteID);
+        printf("cliente %d nao entrou\n", clienteID);
     }
 
     return NULL;
