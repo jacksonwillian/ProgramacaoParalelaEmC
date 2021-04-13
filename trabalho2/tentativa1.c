@@ -1,6 +1,6 @@
 /* TRABALHO 1: Jackson Willian Silva Agostinho - 20172BSI0335 */
 
-#include <Windows.h>
+// #include <Windows.h>
 #include <pthread.h> 
 #include <semaphore.h>
 #include <stdio.h>
@@ -8,7 +8,7 @@
 #include<time.h>
 
 /* MODO_DEBUG definido com valor 0 desativa os prints de debug, e definido com valor 1 ativa os prints de debug */
-#define MODO_DEBUG 0            
+#define MODO_DEBUG 0           
 
 /* contagem do id dos clientes usado somente para debug */
 int CLIENTE_ULTIMO_ID = 0;
@@ -56,7 +56,7 @@ void* f_cliente(void* argumento);
 
 int main(int argc, char** argv) {
 
-    int i, quantBarbeiros, quantCadeirasEspera, quantMinimaClientes, atingiramObjetivo;
+    int i, quantBarbeiros, quantCadeirasEspera, quantMinimaClientes, atingiramObjetivo, quantThreadCriadas;
     barbeiro_t* barbeiros;
     cliente_t* cliente;
     sem_t* barbeirosLiberado, * barbeirosAcordado, * barbeirosAtendeuCliente;
@@ -169,10 +169,23 @@ int main(int argc, char** argv) {
 
     // cria cliente
     atingiramObjetivo = 0;
+    quantThreadCriadas = 0;
+    
+
+    
     while (atingiramObjetivo < quantBarbeiros) {
 
         if (pthread_create(&(cliente->thread), NULL, f_cliente, cliente) != 0) {
-            printf("\nErro ao criar thread cliente\n");
+            printf("\nErro ao criar thread cliente %d\n", quantThreadCriadas);
+            return -13;
+        } else {
+
+            if(pthread_detach(cliente->thread) != 0) {
+                printf("\nErro ao separara thread cliente %d\n", quantThreadCriadas);
+                return -14;
+            } else {
+                quantThreadCriadas++;
+            }
         }
 
         if (sem_getvalue(&totalAtingiramObjetivo, &atingiramObjetivo) != 0) {
@@ -187,6 +200,42 @@ int main(int argc, char** argv) {
     for (i = 0; i < quantBarbeiros; i++) {
         printf("barbeiro %d atendeu %d clientes\n", barbeiros[i].id, barbeiros[i].clientesAtendidos);
     }
+
+    // cancela threads babeiro
+    for (i = 0; i < quantBarbeiros; i++) {
+        if (pthread_cancel(barbeiros[i].thread) != 0) {
+            printf("\nErro ao cancelar thread barbeiros %d\n", i);
+            return -15;
+        }
+    }
+
+    for (i = 0; i < quantBarbeiros; i++) {
+        if (pthread_join(barbeiros[i].thread, NULL) != 0) {
+            printf("\nErro ao dar join thread barbeiros %d\n", i);
+            return -16;
+        }
+    }
+
+    /* libera memoria do barbeiro */
+
+    for(i = 0; i < quantBarbeiros; i++) {
+        sem_destroy(&(barbeirosLiberado[i]));
+        sem_destroy(&(barbeirosAcordado[i]));
+        sem_destroy(&(barbeirosAtendeuCliente[i]));
+    }
+
+    sem_destroy(&totalBarbeirosLiberados);
+    sem_destroy(&totalAtingiramObjetivo);
+    free(barbeiros);
+    free(barbeirosLiberado);
+    free(barbeirosAcordado);
+    free(barbeirosAtendeuCliente);
+
+
+    /* libera memoria do cliente */
+    free(cliente);
+    pthread_mutex_destroy(&mutexClienteID);
+    pthread_mutex_destroy(&mutexUltimoCliente);
 
     return 0;
 }
@@ -309,7 +358,7 @@ void* f_cliente(void* argumento) {
             if (sem_getvalue(cliente->totalAtingiramObjetivo, &totalBarbeirosConcluiramObjetivo) == 0) {
                 break;
             }
-            Sleep(10);
+            // Sleep(10);
         }
 
         if (totalBarbeirosConcluiramObjetivo == cliente->totalBarbeiros) {
@@ -321,7 +370,7 @@ void* f_cliente(void* argumento) {
                 if (sem_getvalue(cliente->totalClientesDentroBarbearia, &totalClientesNaBarbearia) == 0) {
                     break;
                 }
-                Sleep(10);
+                // Sleep(10);
             }
 
             if (totalClientesNaBarbearia == 0) {
@@ -338,5 +387,5 @@ void* f_cliente(void* argumento) {
         #endif
     }
 
-    return NULL;
+    pthread_exit(NULL);
 }
