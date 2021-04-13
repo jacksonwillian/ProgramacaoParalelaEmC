@@ -84,13 +84,13 @@ int main(int argc, char** argv) {
     barbeirosAcordado = malloc(sizeof(sem_t) * quantBarbeiros);
     barbeirosAtendeuCliente = malloc(sizeof(sem_t) * quantBarbeiros);
     cliente = malloc(sizeof(cliente_t));
-    sem_init(&cadeiraEspera, 0, quantCadeirasEspera);  /* todas cadeiras de espera começam livres */
-    sem_init(&totalAtingiramObjetivo, 0, 0);
-    sem_init(&totalBarbeirosLiberados, 0, quantBarbeiros); /* todos barbeiros começam liberados */
-    sem_init(&barbeariaFechou, 0, 0);
-    sem_init(&totalClientesDentroBarbearia, 0, 0);
-    pthread_mutex_init(&mutexClienteID, NULL);
-    pthread_mutex_init(&mutexUltimoCliente, NULL);
+    sem_init(&cadeiraEspera, 0, quantCadeirasEspera);      /* a barbearia abre com todas cadeiras de espera livres */
+    sem_init(&totalAtingiramObjetivo, 0, 0);               /* contagem de barbeiros que atingiram objetivo  */
+    sem_init(&totalBarbeirosLiberados, 0, quantBarbeiros); /* contagem de barbeiros liberados (livres), isto eh, os barbeiros que podem atender algum cliente se for acordado */
+    sem_init(&barbeariaFechou, 0, 0);                      /* sinalizar a main que o programa terminou */
+    sem_init(&totalClientesDentroBarbearia, 0, 0);         /* contagem de cliente dentro da barbearia */
+    pthread_mutex_init(&mutexClienteID, NULL);             /* garantir que apenas um cliente pegue o ID cliente por vez */
+    pthread_mutex_init(&mutexUltimoCliente, NULL);         /* garantir que os clientes saim um por vez, verifique se os barbeiros atingiram o objetivo, e o ultimo sinalize a main que o programa terminou */
 
 
     // inicializa barbeiros
@@ -100,9 +100,9 @@ int main(int argc, char** argv) {
         barbeiros[i].clientesAtendidos = 0;
         barbeiros[i].totalAtingiramObjetivo = &totalAtingiramObjetivo;
         barbeiros[i].totalBarbeiros = quantBarbeiros;
-        sem_init(&(barbeirosLiberado[i]), 0, 1);
-        sem_init(&(barbeirosAcordado[i]), 0, 0);
-        sem_init(&(barbeirosAtendeuCliente[i]), 0, 0);
+        sem_init(&(barbeirosLiberado[i]), 0, 1);            /* define se um barbeiro especifico estah livre (1) ou ocupado (0) */
+        sem_init(&(barbeirosAcordado[i]), 0, 0);            /* define se um barbeiro especifico estah acordado (1) ou dormindo (0) */
+        sem_init(&(barbeirosAtendeuCliente[i]), 0, 0);      /* define se um barbeiro especifico terminou o atendimento ao cliente (1) ou ainda vai terminar (0) */
         barbeiros[i].barbeiroLiberado = &(barbeirosLiberado[i]);
         barbeiros[i].barbeirosAcordado = &(barbeirosAcordado[i]);
         barbeiros[i].barbeirosAtendeuCliente = &(barbeirosAtendeuCliente[i]);
@@ -172,7 +172,7 @@ void* f_barbeiro(void* argumento) {
             sem_post(barbeiro->totalAtingiramObjetivo);
         }
 
-        sem_post(barbeiro->barbeirosAtendeuCliente); /* barbeiro atendeu o cliente */
+        sem_post(barbeiro->barbeirosAtendeuCliente); /* barbeiro terminou de atender o cliente */
         printf("barbeiro %d atendeu um cliente! \n", barbeiro->id);
 
         sem_post(barbeiro->barbeiroLiberado); /* barbeiro estah livre */
@@ -191,7 +191,9 @@ void* f_cliente(void* argumento) {
     bool clienteAtendido = false;
     int clienteID;
 
-    // ID do cliente
+    /*
+        mutex para garantir que apenas um cliente pegue o ID cliente por vez 
+    */
     pthread_mutex_lock(cliente->mutexClienteID);
     clienteID = CLIENTE_ULTIMO_ID;
     CLIENTE_ULTIMO_ID++;
@@ -205,19 +207,19 @@ void* f_cliente(void* argumento) {
 
         while (clienteAtendido == false) {
 
-            sem_wait(cliente->totalBarbeirosLiberados);
+            sem_wait(cliente->totalBarbeirosLiberados); /* caso não tenha barbeiros livres o cliente vai esperar aqui */
 
             int i = (rand() % cliente->totalBarbeiros);
             int barbeirosVerificados = 0;
 
             while (barbeirosVerificados < cliente->totalBarbeiros) {
 
-                if (sem_trywait(&(cliente->barbeirosLiberado[i])) == 0) { /* vai até o barbeiro se ele estiver livre */
+                if (sem_trywait(&(cliente->barbeirosLiberado[i])) == 0) { /* vai ao encontro do barbeiro livre */
                     printf("cliente %d acorda barbeiro %d \n", clienteID, i);
                     sem_post(cliente->cadeiraEspera);  /* libera cadeira de espera */
                     sem_post(&(cliente->barbeirosAcordado[i])); /* acorda barbeiro */
                     printf("cliente %d estah esperando o barbeiro %d \n", clienteID, i);
-                    sem_wait(&(cliente->barbeirosAtendeuCliente[i])); /* cliente espera ser atendido */
+                    sem_wait(&(cliente->barbeirosAtendeuCliente[i])); /* cliente espera, na cadeira do barbeiro, o fim do atendimento */
                     clienteAtendido = true;
                     printf("cliente %d foi atendido pelo barbeiro %d \n", clienteID, i);
                     break;
@@ -236,6 +238,10 @@ void* f_cliente(void* argumento) {
 
         printf("cliente %d saiu\n", clienteID);
 
+        /*
+            mutex para garantir que os clientes saim um por vez, verifique se os barbeiros atingiram o objetivo,
+            e o ultimo sinalize a main que o programa terminou
+        */
         pthread_mutex_lock(cliente->mutexUltimoCliente);
 
         int totalBarbeirosConcluiramObjetivo = 0;
