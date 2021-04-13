@@ -1,6 +1,7 @@
 /* TRABALHO 1: Jackson Willian Silva Agostinho - 20172BSI0335 */
 
 // #include <Windows.h>
+#include <unistd.h>
 #include <pthread.h> 
 #include <semaphore.h>
 #include <stdio.h>
@@ -44,7 +45,7 @@ typedef struct {
     pthread_mutex_t* mutexClienteID;
     pthread_mutex_t* mutexUltimoCliente;
     sem_t* barbeariaFechou;
-    sem_t* totalClientesDentroBarbearia;
+    sem_t* totalClientesVisitaramBarbearia;
     int totalBarbeiros;
 } cliente_t;
 
@@ -64,7 +65,7 @@ int main(int argc, char** argv) {
     sem_t cadeiraEspera;
     sem_t totalAtingiramObjetivo;
     sem_t barbeariaFechou;
-    sem_t totalClientesDentroBarbearia;
+    sem_t totalClientesVisitaramBarbearia;
     pthread_mutex_t mutexClienteID;
     pthread_mutex_t mutexUltimoCliente;
 
@@ -104,7 +105,7 @@ int main(int argc, char** argv) {
         printf("\nErro ao inicializar semaforo\n");
         return -5;
     }
-    if (sem_init(&totalClientesDentroBarbearia, 0, 0) != 0) {         /* contagem de cliente dentro da barbearia */
+    if (sem_init(&totalClientesVisitaramBarbearia, 0, 0) != 0) {         /* contagem de cliente dentro da barbearia */
         printf("\nErro ao inicializar semaforo\n");
         return -6;
     }
@@ -156,7 +157,7 @@ int main(int argc, char** argv) {
     cliente->totalBarbeirosLiberados = &totalBarbeirosLiberados;
     cliente->totalAtingiramObjetivo = &totalAtingiramObjetivo;
     cliente->barbeariaFechou = &barbeariaFechou;
-    cliente->totalClientesDentroBarbearia = &totalClientesDentroBarbearia;
+    cliente->totalClientesVisitaramBarbearia = &totalClientesVisitaramBarbearia;
 
 
     // cria barbeiros
@@ -231,12 +232,11 @@ int main(int argc, char** argv) {
     free(barbeirosAcordado);
     free(barbeirosAtendeuCliente);
 
-
     /* libera memoria do cliente */
-    free(cliente);
     pthread_mutex_destroy(&mutexClienteID);
     pthread_mutex_destroy(&mutexUltimoCliente);
-
+    free(cliente);
+    
     return 0;
 }
 
@@ -296,9 +296,9 @@ void* f_cliente(void* argumento) {
     pthread_mutex_unlock(cliente->mutexClienteID);
     #endif    
 
-    if (sem_trywait(cliente->cadeiraEspera) == 0) { /* ocupa cadeira de espera se alguma estiver livre */
+    sem_post(cliente->totalClientesVisitaramBarbearia);
 
-        sem_post(cliente->totalClientesDentroBarbearia);
+    if (sem_trywait(cliente->cadeiraEspera) == 0) { /* ocupa cadeira de espera se alguma estiver livre */
 
         #if MODO_DEBUG
         printf("cliente %d entrou\n", clienteID);
@@ -339,53 +339,56 @@ void* f_cliente(void* argumento) {
 
         } // fim while
 
-
-        sem_wait(cliente->totalClientesDentroBarbearia);
-
         #if MODO_DEBUG
         printf("cliente %d saiu\n", clienteID);
         #endif
-        /*
-            mutex para garantir que os clientes saiam um por vez para verificar se os barbeiros atingiram o objetivo,
-            e o ultimo sinaliza a main que o programa terminou
-        */
-        pthread_mutex_lock(cliente->mutexUltimoCliente);
 
-        int totalBarbeirosConcluiramObjetivo = 0;
-
-        /* obtem a quantidade de barbeiros que ja atingiram o objetivo */
-        while (true) {
-            if (sem_getvalue(cliente->totalAtingiramObjetivo, &totalBarbeirosConcluiramObjetivo) == 0) {
-                break;
-            }
-            // Sleep(10);
-        }
-
-        if (totalBarbeirosConcluiramObjetivo == cliente->totalBarbeiros) {
-
-            int totalClientesNaBarbearia = 0;
-
-            /* obtem a quantidade de clientes dentro da barbearia */
-            while (true) {
-                if (sem_getvalue(cliente->totalClientesDentroBarbearia, &totalClientesNaBarbearia) == 0) {
-                    break;
-                }
-                // Sleep(10);
-            }
-
-            if (totalClientesNaBarbearia == 0) {
-                /* sinalizar na main que o ultimo cliente saiu da barbearia apos todos barbeiros atingirem o objetivo */
-                sem_post(cliente->barbeariaFechou);
-            }
-        }
-
-        pthread_mutex_unlock(cliente->mutexUltimoCliente);
     }
     else {
         #if MODO_DEBUG
         printf("cliente %d nao entrou\n", clienteID);
         #endif
     }
+
+
+    /*
+        mutex para garantir que os clientes saiam um por vez para verificar se os barbeiros atingiram o objetivo,
+        e o ultimo sinaliza a main que o programa terminou
+    */
+
+    sem_wait(cliente->totalClientesVisitaramBarbearia);
+
+    pthread_mutex_lock(cliente->mutexUltimoCliente);
+
+    int totalBarbeirosConcluiramObjetivo = 0;
+
+    /* obtem a quantidade de barbeiros que ja atingiram o objetivo */
+    while (true) {
+        if (sem_getvalue(cliente->totalAtingiramObjetivo, &totalBarbeirosConcluiramObjetivo) == 0) {
+            break;
+        }
+        // Sleep(10);
+    }
+
+    if (totalBarbeirosConcluiramObjetivo == cliente->totalBarbeiros) {
+
+        int totalClientesVisitaram = 0;
+
+        /* obtem a quantidade de clientes que visitaram/entraram */
+        while (true) {
+            if (sem_getvalue(cliente->totalClientesVisitaramBarbearia, &totalClientesVisitaram) == 0) {
+                break;
+            }
+            // Sleep(10);
+        }
+
+        if (totalClientesVisitaram == 0) {
+            /* sinalizar na main que o ultimo cliente que entrou/visitou da barbearia apos todos barbeiros atingirem o objetivo */
+            sem_post(cliente->barbeariaFechou);
+        }
+    }
+
+    pthread_mutex_unlock(cliente->mutexUltimoCliente);
 
     pthread_exit(NULL);
 }
