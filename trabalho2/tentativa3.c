@@ -1,11 +1,11 @@
 /* TRABALHO 1: Jackson Willian Silva Agostinho - 20172BSI0335 */
 
-// #include <Windows.h>
+#include <Windows.h>
 #include <pthread.h> 
 #include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include<time.h>
+#include <time.h>
 
 
 /* MODO_DEBUG definido com valor 0 desativa os prints de debug, e definido com valor 1 ativa os prints de debug */
@@ -231,7 +231,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    /* libera memoria do barbeiro */
+    /* libera memoria */
 
     for(i = 0; i < quantBarbeiros; i++) {
         sem_destroy(&(barbeirosLiberado[i]));
@@ -276,14 +276,16 @@ void* f_barbeiro(void* argumento) {
             sem_post(barbeiro->totalAtingiramObjetivo);
         }
 
+        Sleep(50); // barbeiro atendendo cliente
+
         sem_post(barbeiro->barbeirosAtendeuCliente); /* barbeiro terminou de atender o cliente */
 
         #if MODO_DEBUG
         printf("barbeiro %d atendeu um cliente! \n", barbeiro->id);
         #endif
 
-        sem_post(barbeiro->totalBarbeirosLiberados); /* incrementa total barbeiros liberados */
         sem_post(barbeiro->barbeiroLiberado); /* barbeiro estah livre */
+        sem_post(barbeiro->totalBarbeirosLiberados); /* incrementa total barbeiros liberados */
 
     }
 
@@ -296,6 +298,7 @@ void* f_cliente(void* argumento) {
     cliente_t* cliente = (cliente_t*)argumento;
 
     bool clienteAtendido = false;
+    int i, barbeirosVerificados;
 
 
     if (sem_trywait(cliente->cadeiraEspera) == 0) { /* ocupa cadeira de espera se alguma estiver livre */
@@ -309,8 +312,8 @@ void* f_cliente(void* argumento) {
             sem_wait(cliente->totalBarbeirosLiberados); /* caso não tenha barbeiros livres o cliente vai esperar aqui */
 
             srand(time(NULL)); // os valores gerados não se repitam
-            int i = (rand() % cliente->totalBarbeiros);
-            int barbeirosVerificados = 0;
+            i = (rand() % cliente->totalBarbeiros);
+            barbeirosVerificados = 0;
 
             while (barbeirosVerificados < cliente->totalBarbeiros) {
 
