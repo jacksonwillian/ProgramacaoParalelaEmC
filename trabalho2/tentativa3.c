@@ -1,4 +1,4 @@
-/* TRABALHO 1: Jackson Willian Silva Agostinho - 20172BSI0335 */
+/* TRABALHO 2: Jackson Willian Silva Agostinho - 20172BSI0335 */
 
 #include <Windows.h>
 #include <pthread.h> 
@@ -60,13 +60,8 @@ int main(int argc, char** argv) {
 
     int i, quantBarbeiros, quantCadeirasEspera, quantMinimaClientes, atingiramObjetivo, idCliente;
     barbeiro_t* barbeiros;
-    cliente_t* cliente;
     sem_t* barbeirosLiberado, * barbeirosAcordado, * barbeirosAtendeuCliente;
-    sem_t totalBarbeirosLiberados;
-    sem_t cadeiraEspera;
-    sem_t totalAtingiramObjetivo;
-    sem_t totalClientesVisitaramBarbearia;
-   
+    sem_t cadeiraEspera, totalBarbeirosLiberados, totalAtingiramObjetivo;
    
     /* validar entradas */
     if (argc != 4) {
@@ -86,7 +81,6 @@ int main(int argc, char** argv) {
     barbeirosLiberado = malloc(sizeof(sem_t) * quantBarbeiros);
     barbeirosAcordado = malloc(sizeof(sem_t) * quantBarbeiros);
     barbeirosAtendeuCliente = malloc(sizeof(sem_t) * quantBarbeiros);
-    cliente =  malloc(sizeof(cliente_t)); 
 
     if (sem_init(&cadeiraEspera, 0, quantCadeirasEspera) != 0) {      /* a barbearia abre com todas cadeiras de espera livres */
         printf("\nErro ao inicializar semaforo\n");
@@ -100,12 +94,6 @@ int main(int argc, char** argv) {
         printf("\nErro ao inicializar semaforo\n");
         return -4;
     }
-
-    if (sem_init(&totalClientesVisitaramBarbearia, 0, 0) != 0) {         /* contagem de cliente dentro da barbearia */
-        printf("\nErro ao inicializar semaforo\n");
-        return -6;
-    }
-
 
 
     /* inicializa barbeiros */
@@ -198,7 +186,7 @@ int main(int argc, char** argv) {
     }
     
 
-    /* aguarda todas as threads clientes terminarem e libera memoria */
+    /* aguarda todas as threads clientes terminarem e depois libera memoria */
     noAuxiliar1 = NULL;
     noAuxiliar2 = NULL;
     noAuxiliar1 = noInical;
@@ -212,7 +200,7 @@ int main(int argc, char** argv) {
         noAuxiliar1 = noAuxiliar2;
     }
 
-    /* exibi o barbeiro */
+    /* exibi a quantidade de clientes que cada barbeiro atendeu */
     for (i = 0; i < quantBarbeiros; i++) {
         printf("barbeiro %d atendeu %d clientes\n", barbeiros[i].id, barbeiros[i].clientesAtendidos);
     }
@@ -246,7 +234,6 @@ int main(int argc, char** argv) {
     free(barbeirosLiberado);
     free(barbeirosAcordado);
     free(barbeirosAtendeuCliente);
-    free(cliente);
     
     return 0;
 }
