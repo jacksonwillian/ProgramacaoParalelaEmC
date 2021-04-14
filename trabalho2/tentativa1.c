@@ -1,7 +1,6 @@
 /* TRABALHO 1: Jackson Willian Silva Agostinho - 20172BSI0335 */
 
-// #include <Windows.h>
-#include <unistd.h>
+#include <Windows.h>
 #include <pthread.h> 
 #include <semaphore.h>
 #include <stdio.h>
@@ -171,20 +170,22 @@ int main(int argc, char** argv) {
     // cria cliente
     atingiramObjetivo = 0;
     quantThreadCriadas = 0;
-    
 
-    
+
+
     while (atingiramObjetivo < quantBarbeiros) {
 
         if (pthread_create(&(cliente->thread), NULL, f_cliente, cliente) != 0) {
             printf("\nErro ao criar thread cliente %d\n", quantThreadCriadas);
             return -13;
-        } else {
+        }
+        else {
 
-            if(pthread_detach(cliente->thread) != 0) {
+            if (pthread_detach(cliente->thread) != 0) {
                 printf("\nErro ao separara thread cliente %d\n", quantThreadCriadas);
                 return -14;
-            } else {
+            }
+            else {
                 quantThreadCriadas++;
             }
         }
@@ -219,7 +220,7 @@ int main(int argc, char** argv) {
 
     /* libera memoria do barbeiro */
 
-    for(i = 0; i < quantBarbeiros; i++) {
+    for (i = 0; i < quantBarbeiros; i++) {
         sem_destroy(&(barbeirosLiberado[i]));
         sem_destroy(&(barbeirosAcordado[i]));
         sem_destroy(&(barbeirosAtendeuCliente[i]));
@@ -236,7 +237,7 @@ int main(int argc, char** argv) {
     pthread_mutex_destroy(&mutexClienteID);
     pthread_mutex_destroy(&mutexUltimoCliente);
     free(cliente);
-    
+
     return 0;
 }
 
@@ -246,31 +247,31 @@ void* f_barbeiro(void* argumento) {
 
     barbeiro_t* barbeiro = (barbeiro_t*)argumento;
 
-    #if MODO_DEBUG
+#if MODO_DEBUG
     printf("barbeiro id %d entrou\n", barbeiro->id);
-    #endif
+#endif
 
     while (true) {
         sem_wait(barbeiro->barbeirosAcordado); /* barbeiro estah dormindo */
 
-        #if MODO_DEBUG
+#if MODO_DEBUG
         printf("barbeiro %d acordou!\n", barbeiro->id);
-        #endif
+#endif
 
         barbeiro->clientesAtendidos++;
 
         if (barbeiro->clientesAtendidos == barbeiro->quantMinimaClientes) {
-            #if MODO_DEBUG
+#if MODO_DEBUG
             printf("barbeiro %d atingiu seu objetivo!\n", barbeiro->id);
-            #endif
+#endif
             sem_post(barbeiro->totalAtingiramObjetivo);
         }
 
         sem_post(barbeiro->barbeirosAtendeuCliente); /* barbeiro terminou de atender o cliente */
 
-        #if MODO_DEBUG
+#if MODO_DEBUG
         printf("barbeiro %d atendeu um cliente! \n", barbeiro->id);
-        #endif
+#endif
 
         sem_post(barbeiro->totalBarbeirosLiberados); /* incrementa total barbeiros liberados */
         sem_post(barbeiro->barbeiroLiberado); /* barbeiro estah livre */
@@ -287,22 +288,22 @@ void* f_cliente(void* argumento) {
 
     bool clienteAtendido = false;
 
-    #if MODO_DEBUG
+#if MODO_DEBUG
     int clienteID;
     /* mutex para garantir que apenas um cliente pegue o ID cliente por vez */
     pthread_mutex_lock(cliente->mutexClienteID);
     clienteID = CLIENTE_ULTIMO_ID;
     CLIENTE_ULTIMO_ID++;
     pthread_mutex_unlock(cliente->mutexClienteID);
-    #endif    
+#endif    
 
     sem_post(cliente->totalClientesVisitaramBarbearia);
 
     if (sem_trywait(cliente->cadeiraEspera) == 0) { /* ocupa cadeira de espera se alguma estiver livre */
 
-        #if MODO_DEBUG
+#if MODO_DEBUG
         printf("cliente %d entrou\n", clienteID);
-        #endif
+#endif
 
         while (clienteAtendido == false) {
 
@@ -315,19 +316,19 @@ void* f_cliente(void* argumento) {
             while (barbeirosVerificados < cliente->totalBarbeiros) {
 
                 if (sem_trywait(&(cliente->barbeirosLiberado[i])) == 0) { /* vai ao encontro do barbeiro livre */
-                    #if MODO_DEBUG
+#if MODO_DEBUG
                     printf("cliente %d acorda barbeiro %d \n", clienteID, i);
-                    #endif
+#endif
                     sem_post(cliente->cadeiraEspera);  /* libera cadeira de espera */
                     sem_post(&(cliente->barbeirosAcordado[i])); /* acorda barbeiro */
-                    #if MODO_DEBUG
+#if MODO_DEBUG
                     printf("cliente %d estah esperando o barbeiro %d \n", clienteID, i);
-                    #endif
+#endif
                     sem_wait(&(cliente->barbeirosAtendeuCliente[i])); /* cliente espera, na cadeira do barbeiro, o fim do atendimento */
                     clienteAtendido = true;
-                    #if MODO_DEBUG
+#if MODO_DEBUG
                     printf("cliente %d foi atendido pelo barbeiro %d \n", clienteID, i);
-                    #endif
+#endif
                     break;
                 } // fim if
 
@@ -339,15 +340,15 @@ void* f_cliente(void* argumento) {
 
         } // fim while
 
-        #if MODO_DEBUG
+#if MODO_DEBUG
         printf("cliente %d saiu\n", clienteID);
-        #endif
+#endif
 
     }
     else {
-        #if MODO_DEBUG
+#if MODO_DEBUG
         printf("cliente %d nao entrou\n", clienteID);
-        #endif
+#endif
     }
 
 
@@ -367,7 +368,7 @@ void* f_cliente(void* argumento) {
         if (sem_getvalue(cliente->totalAtingiramObjetivo, &totalBarbeirosConcluiramObjetivo) == 0) {
             break;
         }
-        // Sleep(10);
+        Sleep(10);
     }
 
     if (totalBarbeirosConcluiramObjetivo == cliente->totalBarbeiros) {
@@ -379,7 +380,7 @@ void* f_cliente(void* argumento) {
             if (sem_getvalue(cliente->totalClientesVisitaramBarbearia, &totalClientesVisitaram) == 0) {
                 break;
             }
-            // Sleep(10);
+            Sleep(10);
         }
 
         if (totalClientesVisitaram == 0) {
