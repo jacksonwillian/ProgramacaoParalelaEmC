@@ -9,7 +9,7 @@
 
 
 /* MODO_DEBUG definido com valor 0 desativa os prints de debug, e definido com valor 1 ativa os prints de debug */
-#define MODO_DEBUG 1           
+#define MODO_DEBUG 0           
 
 
 typedef enum {
@@ -44,10 +44,10 @@ typedef struct {
     int totalBarbeiros;
 } cliente_t;
 
-
+/* usado para criar uma lista dinamica de clientes */
 typedef struct TNo {	
-	cliente_t cliente;    // elemento
-	struct TNo *prox;     // nó posterior
+	cliente_t cliente;
+	struct TNo *prox;
 } TNo, * PNo;
 
 
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
     sem_t totalClientesVisitaramBarbearia;
    
    
-    // validar entradas
+    /* validar entradas */
     if (argc != 4) {
         printf("\nA quantidade de argumentos na linha de comando eh invalida!\n");
         return -1;
@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    // inicializar variaveis
+    /* inicializar variaveis */
     quantBarbeiros = atoi(argv[1]);
     quantCadeirasEspera = atoi(argv[2]);
     quantMinimaClientes = atoi(argv[3]);
@@ -108,7 +108,7 @@ int main(int argc, char** argv) {
 
 
 
-    // inicializa barbeiros
+    /* inicializa barbeiros */
     for (i = 0; i < quantBarbeiros; i++) {
         barbeiros[i].id = i;
         barbeiros[i].quantMinimaClientes = quantMinimaClientes;
@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    // cria barbeiros
+    /* cria barbeiros */
     for (i = 0; i < quantBarbeiros; i++) {
         if (pthread_create(&(barbeiros[i].thread), NULL, f_barbeiro, &(barbeiros[i])) != 0) {
             printf("\nErro ao criar thread barbeiro %d\n", i);
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    // cria cliente
+    /* cria cliente enquanto barbeiros nao atingiram objetivo */
     atingiramObjetivo = 0;
     idCliente = 0;
     
@@ -197,6 +197,8 @@ int main(int argc, char** argv) {
         }
     }
     
+
+    /* aguarda todas as threads clientes terminarem e libera memoria */
     noAuxiliar1 = NULL;
     noAuxiliar2 = NULL;
     noAuxiliar1 = noInical;
@@ -210,12 +212,13 @@ int main(int argc, char** argv) {
         noAuxiliar1 = noAuxiliar2;
     }
 
-    // exibi o babeiro
+    /* exibi o barbeiro */
     for (i = 0; i < quantBarbeiros; i++) {
         printf("barbeiro %d atendeu %d clientes\n", barbeiros[i].id, barbeiros[i].clientesAtendidos);
     }
 
-    // cancela threads babeiro
+    
+    /* cancela threads barbeiro */
     // https://wiki.sei.cmu.edu/confluence/display/c/POS44-C.+Do+not+use+signals+to+terminate+threads
     for (i = 0; i < quantBarbeiros; i++) {
         if (pthread_cancel(barbeiros[i].thread) != 0) {
@@ -232,13 +235,11 @@ int main(int argc, char** argv) {
     }
 
     /* libera memoria */
-
     for(i = 0; i < quantBarbeiros; i++) {
         sem_destroy(&(barbeirosLiberado[i]));
         sem_destroy(&(barbeirosAcordado[i]));
         sem_destroy(&(barbeirosAtendeuCliente[i]));
     }
-
     sem_destroy(&totalBarbeirosLiberados);
     sem_destroy(&totalAtingiramObjetivo);
     free(barbeiros);
