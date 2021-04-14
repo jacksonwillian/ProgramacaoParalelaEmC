@@ -255,6 +255,8 @@ void* f_barbeiro(void* argumento) {
         printf("barbeiro %d acordou!\n", barbeiro->id);
         #endif
 
+        Sleep(50); // barbeiro estah atendendo cliente
+
         barbeiro->clientesAtendidos++;
 
         if (barbeiro->clientesAtendidos == barbeiro->quantMinimaClientes) {
@@ -264,8 +266,6 @@ void* f_barbeiro(void* argumento) {
             sem_post(barbeiro->totalAtingiramObjetivo);
         }
 
-        Sleep(50); // barbeiro atendendo cliente
-
         sem_post(barbeiro->barbeirosAtendeuCliente); /* barbeiro terminou de atender o cliente */
 
         #if MODO_DEBUG
@@ -274,7 +274,6 @@ void* f_barbeiro(void* argumento) {
 
         sem_post(barbeiro->barbeiroLiberado); /* barbeiro estah livre */
         sem_post(barbeiro->totalBarbeirosLiberados); /* incrementa total barbeiros liberados */
-
     }
 
     return NULL;
@@ -287,7 +286,6 @@ void* f_cliente(void* argumento) {
 
     bool clienteAtendido = false;
     int i, barbeirosVerificados;
-
 
     if (sem_trywait(cliente->cadeiraEspera) == 0) { /* ocupa cadeira de espera se alguma estiver livre */
 
@@ -333,7 +331,6 @@ void* f_cliente(void* argumento) {
         #if MODO_DEBUG
         printf("cliente %d saiu\n", cliente->id);
         #endif
-
     }
     else {
         #if MODO_DEBUG
