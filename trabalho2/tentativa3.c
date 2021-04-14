@@ -9,7 +9,7 @@
 
 
 /* MODO_DEBUG definido com valor 0 desativa os prints de debug, e definido com valor 1 ativa os prints de debug */
-#define MODO_DEBUG 0           
+#define MODO_DEBUG 1           
 
 
 typedef enum {
@@ -40,7 +40,6 @@ typedef struct {
     sem_t* barbeirosAcordado;
     sem_t* barbeirosAtendeuCliente;
     sem_t* totalBarbeirosLiberados;
-    sem_t* totalAtingiramObjetivo;
     int totalBarbeiros;
 } cliente_t;
 
@@ -146,7 +145,6 @@ int main(int argc, char** argv) {
     noAuxiliar1->cliente.barbeirosAtendeuCliente = barbeirosAtendeuCliente;
     noAuxiliar1->cliente.totalBarbeiros = quantBarbeiros;
     noAuxiliar1->cliente.totalBarbeirosLiberados = &totalBarbeirosLiberados;
-    noAuxiliar1->cliente.totalAtingiramObjetivo = &totalAtingiramObjetivo;
 
     if (pthread_create(&(noAuxiliar1->cliente.thread), NULL, f_cliente, &(noAuxiliar1->cliente)) != 0) {
         printf("\nErro ao criar thread cliente %d\n", noAuxiliar1->cliente.id);
@@ -170,7 +168,6 @@ int main(int argc, char** argv) {
         noAuxiliar2->cliente.barbeirosAtendeuCliente = barbeirosAtendeuCliente;
         noAuxiliar2->cliente.totalBarbeiros = quantBarbeiros;
         noAuxiliar2->cliente.totalBarbeirosLiberados = &totalBarbeirosLiberados;
-        noAuxiliar2->cliente.totalAtingiramObjetivo = &totalAtingiramObjetivo;
 
         noAuxiliar1->prox = noAuxiliar2;
         noAuxiliar1 = noAuxiliar2;
