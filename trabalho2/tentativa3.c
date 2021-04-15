@@ -152,9 +152,9 @@ int main(int argc, char** argv) {
     }
 
     /* delay para evitar erro na funcao pthread_create ao criar muitas threads em um curto periodo de tempo */
-    // obs.: Pelos testes realizado o uso do Sleep() nao eh necessario quando o executavel eh gerado via gcc normalmente, mas eh necessario quando o Visual Studio 2019 gera o executavel
-    // o Visual Studio 2019 otimiza o executavel gerado, fazendo o programa executar mais rapido, deste modo causa o erro na funcao pthread_create.
-    Sleep(1); 
+    // obs.: O Sleep(1) a seguir soh deve ser usado caso o executavel gerado sempre retorne erro na funcao pthread_create.
+    // alem disso, o printf 'cliente nao entrou' na linha 339, impresso no MODO_DEBUG, parece interferir no erro da funçao pthread_create, por isso foi comentado.
+    // Sleep(1);
 
     if (sem_getvalue(&totalAtingiramObjetivo, &atingiramObjetivo) != 0) {
         atingiramObjetivo = 0;
@@ -336,7 +336,7 @@ void* f_cliente(void* argumento) {
     }
     else {
         #if MODO_DEBUG
-        printf("cliente %d nao entrou\n", cliente->id);
+        //printf("cliente %d nao entrou\n", cliente->id);
         #endif
     }
 
