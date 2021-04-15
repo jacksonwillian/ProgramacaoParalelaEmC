@@ -151,6 +151,11 @@ int main(int argc, char** argv) {
         return -13;
     }
 
+    /* delay para evitar erro na funcao pthread_create ao criar muitas threads em um curto periodo de tempo */
+    // obs.: Pelos testes realizado o uso do Sleep() nao eh necessario quando o executavel eh gerado via gcc normalmente, mas eh necessario quando o Visual Studio 2019 gera o executavel
+    // o Visual Studio 2019 otimiza o executavel gerado, fazendo o programa executar mais rapido, deste modo causa o erro na funcao pthread_create.
+    Sleep(1); 
+
     if (sem_getvalue(&totalAtingiramObjetivo, &atingiramObjetivo) != 0) {
         atingiramObjetivo = 0;
     }
@@ -252,7 +257,7 @@ void* f_barbeiro(void* argumento) {
         printf("barbeiro %d acordou!\n", barbeiro->id);
         #endif
 
-        Sleep(50); // barbeiro estah atendendo cliente
+        Sleep(10); // barbeiro estah atendendo cliente
 
         barbeiro->clientesAtendidos++;
 
