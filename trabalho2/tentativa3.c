@@ -9,7 +9,7 @@
 
 
 /* MODO_DEBUG definido com valor 0 desativa os prints de debug, e definido com valor 1 ativa os prints de debug */
-#define MODO_DEBUG 1           
+#define MODO_DEBUG 0           
 
 
 typedef enum {
@@ -61,6 +61,7 @@ int main(int argc, char** argv) {
     barbeiro_t* barbeiros;
     sem_t* barbeirosLiberado, * barbeirosAcordado, * barbeirosAtendeuCliente;
     sem_t cadeiraEspera, totalBarbeirosLiberados, totalAtingiramObjetivo;
+    PNo noInicial, noAuxiliar1, noAuxiliar2; 
    
     /* validar entradas */
     if (argc != 4) {
@@ -129,13 +130,12 @@ int main(int argc, char** argv) {
         }
     }
 
-    /* cria cliente enquanto barbeiros nao atingiram objetivo */
+    /* cria clientes enquanto todos os barbeiros ainda nao atingiram o objetivo */
     atingiramObjetivo = 0;
     idCliente = 0;
     
-    PNo noInical, noAuxiliar1, noAuxiliar2; 
-	noInical = (PNo) malloc(sizeof(TNo)); 
-    noAuxiliar1 = noInical;
+	noInicial = (PNo) malloc(sizeof(TNo)); 
+    noAuxiliar1 = noInicial;
     noAuxiliar1->prox = NULL;
 
     noAuxiliar1->cliente.id = idCliente;
@@ -186,7 +186,7 @@ int main(int argc, char** argv) {
     /* aguarda todas as threads clientes terminarem e depois libera memoria */
     noAuxiliar1 = NULL;
     noAuxiliar2 = NULL;
-    noAuxiliar1 = noInical;
+    noAuxiliar1 = noInicial;
     while (noAuxiliar1 != NULL) {
         if (pthread_join(noAuxiliar1->cliente.thread, NULL) != 0) {
             printf("\nErro ao unir thread cliente %d\n", noAuxiliar1->cliente.id);
@@ -294,8 +294,8 @@ void* f_cliente(void* argumento) {
 
             sem_wait(cliente->totalBarbeirosLiberados); /* caso não tenha barbeiros livres o cliente vai esperar aqui */
 
-            srand(time(NULL)); // os valores gerados não se repitam
-            i = (rand() % cliente->totalBarbeiros);
+            srand(time(NULL)); // muda  semente do rand() para que os valores gerados não se repitam
+            i = (rand() % cliente->totalBarbeiros); // indice inicial aleatorio
             barbeirosVerificados = 0;
 
             while (barbeirosVerificados < cliente->totalBarbeiros) {
