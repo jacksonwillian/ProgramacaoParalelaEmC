@@ -1,4 +1,4 @@
-/* TRABALHO 2: Jackson Willian Silva Agostinho - 20172BSI0335 */
+/* TRABALHO 2: Jackson Willian Silva Agostinho - 20172BSI0335 - jacksonwillianjbv@gmail.com */
 
 #include <Windows.h>
 #include <pthread.h> 
