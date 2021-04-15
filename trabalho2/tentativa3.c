@@ -151,11 +151,6 @@ int main(int argc, char** argv) {
         return -13;
     }
 
-    /* delay para evitar erro na funcao pthread_create ao criar muitas threads em um curto periodo de tempo */
-    // obs.: O Sleep(1) a seguir soh deve ser usado caso o executavel gerado sempre retorne erro na funcao pthread_create.
-    // alem disso, o printf 'cliente nao entrou' na linha 339, impresso no MODO_DEBUG, parece interferir no erro da funçao pthread_create, por isso foi comentado.
-    // Sleep(1);
-
     if (sem_getvalue(&totalAtingiramObjetivo, &atingiramObjetivo) != 0) {
         atingiramObjetivo = 0;
     }
@@ -176,6 +171,10 @@ int main(int argc, char** argv) {
 
         noAuxiliar1->prox = noAuxiliar2;
         noAuxiliar1 = noAuxiliar2;
+
+        #if MODO_DEBUG
+        printf("cria cliente %d\n", idCliente);
+        #endif
 
         if (pthread_create(&(noAuxiliar2->cliente.thread), NULL, f_cliente, &(noAuxiliar2->cliente)) != 0) {
             printf("\nErro ao criar thread cliente %d\n", noAuxiliar2->cliente.id);
@@ -336,7 +335,7 @@ void* f_cliente(void* argumento) {
     }
     else {
         #if MODO_DEBUG
-        //printf("cliente %d nao entrou\n", cliente->id);
+        printf("cliente %d nao entrou\n", cliente->id);
         #endif
     }
 
