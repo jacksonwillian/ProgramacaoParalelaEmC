@@ -298,8 +298,8 @@ void* f_cliente(void* argumento) {
 
             sem_wait(cliente->totalBarbeirosLiberados); /* caso não tenha barbeiros livres o cliente vai esperar aqui */
 
-            srand(time(NULL)); // muda  semente do rand() para que os valores gerados não se repitam
-            i = (rand() % cliente->totalBarbeiros); // indice inicial aleatorio
+            srand(time(NULL)); // muda semente do rand() 
+            i = (rand() % cliente->totalBarbeiros); // indice inicial
             barbeirosVerificados = 0;
 
             while (barbeirosVerificados < cliente->totalBarbeiros) {
