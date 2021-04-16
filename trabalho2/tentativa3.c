@@ -256,7 +256,7 @@ void* f_barbeiro(void* argumento) {
         printf("barbeiro %d acordou!\n", barbeiro->id);
         #endif
 
-        Sleep(10); // barbeiro estah atendendo cliente
+        Sleep(1); // barbeiro estah atendendo cliente
 
         barbeiro->clientesAtendidos++;
 
