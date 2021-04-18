@@ -1,6 +1,13 @@
 /* TRABALHO 2: Jackson Willian Silva Agostinho - 20172BSI0335 - jacksonwillianjbv@gmail.com */
 
-// #include <Windows.h>
+#define _GNU_SOURCE
+
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
 #include <pthread.h> 
 #include <semaphore.h>
 #include <stdio.h>
@@ -67,8 +74,6 @@ int main(int argc, char** argv) {
     sem_t barbeariaFechou, totalClientesVisitaramBarbearia;
     pthread_attr_t tattr;
 
-
-
     /* validar entradas */
     if (argc != 4) {
         printf("\nA quantidade de argumentos na linha de comando eh invalida!\n");
@@ -88,9 +93,7 @@ int main(int argc, char** argv) {
     barbeirosAcordado = malloc(sizeof(sem_t) * quantBarbeiros);
     barbeirosAtendeuCliente = malloc(sizeof(sem_t) * quantBarbeiros);
     cliente = malloc(sizeof(cliente_t));
-    quantThreadCriadas = 0;
-
-
+ 
     if (sem_init(&cadeiraEspera, 0, quantCadeirasEspera) != 0) {      /* a barbearia abre com todas cadeiras de espera livres */
         printf("\nErro ao inicializar semaforo\n");
         return -2;
@@ -127,7 +130,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    /* define atributo para detached (recursos podem ser reutilizados assim que o encadeamento termina) */
+    /* define atributo para detached (recursos podem ser reutilizados a medida que cada thread termina) */
     if (pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_DETACHED) != 0) {
         printf("Erro ao definir atributo da thread \n");
         return -1;
@@ -182,13 +185,22 @@ int main(int argc, char** argv) {
     cliente->barbeariaFechou = &barbeariaFechou;
     cliente->totalClientesVisitaramBarbearia = &totalClientesVisitaramBarbearia;
 
-
+    quantThreadCriadas = 0;
+    atingiramObjetivo = 0;
     while (atingiramObjetivo < quantBarbeiros) {
-
+        
+        /* incrementa a quantidade de clientes que vai visitar/ visitou a barbearia
+           para o programa saber que ainda vai ser enviado um novo cliente
+        */
         sem_post(&totalClientesVisitaramBarbearia);
 
         while (pthread_create(&(cliente->thread), &tattr, f_cliente, cliente) != 0) {
             printf("\nErro ao criar thread cliente %d\n", quantThreadCriadas);
+            #ifdef _WIN32
+            Sleep(1000);
+            #else
+            sleep(1);
+            #endif
         } 
 
         if (sem_getvalue(&totalAtingiramObjetivo, &atingiramObjetivo) != 0) {
@@ -198,7 +210,7 @@ int main(int argc, char** argv) {
         quantThreadCriadas++;
     }
 
-    // espera o sinal que avisa que ultimo cliente foi atentido
+    // espera o sinal que avisa que ultimo cliente saiu da barbearia
     sem_wait(&barbeariaFechou);
     
 
@@ -207,24 +219,34 @@ int main(int argc, char** argv) {
         printf("barbeiro %d atendeu %d clientes\n", barbeiros[i].id, barbeiros[i].clientesAtendidos);
     }
 
-    
     /* cancela threads barbeiro */
     // https://wiki.sei.cmu.edu/confluence/display/c/POS44-C.+Do+not+use+signals+to+terminate+threads
     for (i = 0; i < quantBarbeiros; i++) {
-        if (pthread_cancel(barbeiros[i].thread) != 0) {
+        while(pthread_cancel(barbeiros[i].thread) != 0) {
             printf("\nErro ao cancelar thread barbeiro %d\n", i);
-            return -15;
+            #ifdef _WIN32
+            Sleep(1000);
+            #else
+            sleep(1);
+            #endif
         }
     }
 
+
+    /* ponto de cancelamento */
     for (i = 0; i < quantBarbeiros; i++) {
-        if (pthread_join(barbeiros[i].thread, NULL) != 0) {
-            printf("\nErro ao unir thread barbeiro %d\n", i);
-            return -16;
+        while(pthread_tryjoin_np(barbeiros[i].thread, NULL) != 0) {
+            pthread_testcancel();
+            #ifdef _WIN32
+            Sleep(1000);
+            #else
+            sleep(1);
+            #endif
         }
     }
 
     /* libera memoria */
+    pthread_attr_destroy(&tattr);
     for(i = 0; i < quantBarbeiros; i++) {
         sem_destroy(&(barbeirosLiberado[i]));
         sem_destroy(&(barbeirosAcordado[i]));
@@ -362,9 +384,16 @@ void* f_cliente(void* argumento) {
 
     /* obtem a quantidade de barbeiros que ja atingiram o objetivo */
     while (true) {
+
         if (sem_getvalue(cliente->totalAtingiramObjetivo, &totalBarbeirosConcluiramObjetivo) == 0) {
             break;
         }
+
+        #ifdef _WIN32
+        Sleep(1000);
+        #else
+        sleep(1);
+        #endif
     }
 
     if (totalBarbeirosConcluiramObjetivo == cliente->totalBarbeiros) {
@@ -376,6 +405,13 @@ void* f_cliente(void* argumento) {
             if (sem_getvalue(cliente->totalClientesVisitaramBarbearia, &totalClientesVisitaram) == 0) {
                 break;
             }
+
+            #ifdef _WIN32
+            Sleep(1000);
+            #else
+            sleep(1);
+            #endif
+
         }
 
         if (totalClientesVisitaram == 0) {
