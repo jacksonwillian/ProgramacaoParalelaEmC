@@ -185,6 +185,8 @@ int main(int argc, char** argv) {
 
     while (atingiramObjetivo < quantBarbeiros) {
 
+        sem_post(&totalClientesVisitaramBarbearia);
+
         while (pthread_create(&(cliente->thread), &tattr, f_cliente, cliente) != 0) {
             printf("\nErro ao criar thread cliente %d\n", quantThreadCriadas);
         } 
@@ -294,9 +296,6 @@ void* f_cliente(void* argumento) {
         CLIENTE_ULTIMO_ID++;
         pthread_mutex_unlock(cliente->mutexClienteID);
     #endif  
-
-    sem_post(cliente->totalClientesVisitaramBarbearia);
-
 
     if (sem_trywait(cliente->cadeiraEspera) == 0) { /* ocupa cadeira de espera se alguma estiver livre */
 
