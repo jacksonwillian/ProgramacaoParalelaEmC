@@ -70,8 +70,8 @@ int main(int argc, char** argv) {
     cliente_t* cliente;
     sem_t* barbeirosLiberado, * barbeirosAcordado, * barbeirosAtendeuCliente;
     sem_t cadeiraEspera, totalBarbeirosLiberados, totalAtingiramObjetivo;
-    pthread_mutex_t mutexClienteID, mutexUltimoCliente;
     sem_t barbeariaFechou, totalClientesVisitaramBarbearia;
+    pthread_mutex_t mutexClienteID, mutexUltimoCliente;
     pthread_attr_t tattr;
 
     /* validar entradas */
@@ -207,15 +207,20 @@ int main(int argc, char** argv) {
         }
     }
 
-    /* libera memoria / destroi variaveis */
+    /* destroi variaveis e libera memoria */
     pthread_attr_destroy(&tattr);
     for(i = 0; i < quantBarbeiros; i++) {
         sem_destroy(&(barbeirosLiberado[i]));
         sem_destroy(&(barbeirosAcordado[i]));
         sem_destroy(&(barbeirosAtendeuCliente[i]));
     }
+    sem_destroy(&barbeariaFechou);
+    sem_destroy(&cadeiraEspera);
     sem_destroy(&totalBarbeirosLiberados);
     sem_destroy(&totalAtingiramObjetivo);
+    sem_destroy(&totalClientesVisitaramBarbearia);
+    pthread_mutex_destroy(&mutexClienteID);
+    pthread_mutex_destroy(&mutexUltimoCliente);
     free(barbeiros);
     free(cliente);
     free(barbeirosLiberado);
