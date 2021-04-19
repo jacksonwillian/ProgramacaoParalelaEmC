@@ -94,46 +94,81 @@ int main(int argc, char** argv) {
     barbeirosAtendeuCliente = malloc(sizeof(sem_t) * quantBarbeiros);
     cliente = malloc(sizeof(cliente_t));
  
-    if (sem_init(&cadeiraEspera, 0, quantCadeirasEspera) != 0) {      /* a barbearia abre com todas cadeiras de espera livres */
+    while (sem_init(&cadeiraEspera, 0, quantCadeirasEspera) != 0) {      /* a barbearia abre com todas cadeiras de espera livres */
         printf("\nErro ao inicializar semaforo\n");
-        return -2;
+        #ifdef _WIN32
+        Sleep(1000);
+        #else
+        sleep(1);
+        #endif
     }
-    if (sem_init(&totalAtingiramObjetivo, 0, 0) != 0) {               /* contagem de barbeiros que atingiram objetivo  */
+    while (sem_init(&totalAtingiramObjetivo, 0, 0) != 0) {               /* contagem de barbeiros que atingiram objetivo  */
         printf("\nErro ao inicializar semaforo\n");
-        return -3;
+        #ifdef _WIN32
+        Sleep(1000);
+        #else
+        sleep(1);
+        #endif
     }
-    if (sem_init(&totalBarbeirosLiberados, 0, quantBarbeiros) != 0) {  /* contagem de barbeiros liberados (livres), isto eh, os barbeiros que podem atender algum cliente se for acordado */
+    while (sem_init(&totalBarbeirosLiberados, 0, quantBarbeiros) != 0) {  /* contagem de barbeiros liberados (livres), isto eh, os barbeiros que podem atender algum cliente se for acordado */
         printf("\nErro ao inicializar semaforo\n");
-        return -4;
+        #ifdef _WIN32
+        Sleep(1000);
+        #else
+        sleep(1);
+        #endif
     }
-
-    if (sem_init(&barbeariaFechou, 0, 0) != 0) {                       /* sinalizar a main que o programa terminou */
+    while (sem_init(&barbeariaFechou, 0, 0) != 0) {                       /* sinalizar a main que o programa terminou */
         printf("\nErro ao inicializar semaforo\n");
-        return -5;
+        #ifdef _WIN32
+        Sleep(1000);
+        #else
+        sleep(1);
+        #endif
     }
-    if (sem_init(&totalClientesVisitaramBarbearia, 0, 0) != 0) {         /* contagem de cliente dentro da barbearia */
+    while (sem_init(&totalClientesVisitaramBarbearia, 0, 0) != 0) {         /* contagem de cliente dentro da barbearia */
         printf("\nErro ao inicializar semaforo\n");
-        return -6;
+            #ifdef _WIN32
+            Sleep(1000);
+            #else
+            sleep(1);
+            #endif
     }
-    if (pthread_mutex_init(&mutexClienteID, NULL) != 0) {             /* garantir que apenas um cliente pegue o ID cliente por vez */
+    while (pthread_mutex_init(&mutexClienteID, NULL) != 0) {             /* garantir que apenas um cliente pegue o ID cliente por vez */
         printf("\nErro ao inicializar mutex\n");
-        return -7;
+        #ifdef _WIN32
+        Sleep(1000);
+        #else
+        sleep(1);
+        #endif
     }
-    if (pthread_mutex_init(&mutexUltimoCliente, NULL) != 0) {         /* garantir que os clientes saiam um por vez para verificar se os barbeiros atingiram o objetivo, e o ultimo sinaliza a main que o programa terminou */
+    while (pthread_mutex_init(&mutexUltimoCliente, NULL) != 0) {         /* garantir que os clientes saiam um por vez para verificar se os barbeiros atingiram o objetivo, e o ultimo sinaliza a main que o programa terminou */
         printf("\nErro ao inicializar mutex\n");
-        return -8;
+        #ifdef _WIN32
+        Sleep(1000);
+        #else
+        sleep(1);
+        #endif
     }
 
     /* inicializa variavel atributo thread */
-    if (pthread_attr_init(&tattr) != 0) {
+    while (pthread_attr_init(&tattr) != 0) {
         printf("Erro ao inicializar o thread atributo \n");
-        return -1;
+        #ifdef _WIN32
+        Sleep(1000);
+        #else
+        sleep(1);
+        #endif
     }
 
     /* define atributo para detached (recursos podem ser reutilizados a medida que cada thread termina) */
-    if (pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_DETACHED) != 0) {
+    while (pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_DETACHED) != 0) {
         printf("Erro ao definir atributo da thread \n");
-        return -1;
+        #ifdef _WIN32
+        Sleep(1000);
+        #else
+        sleep(1);
+        #endif
     }
 
 
@@ -149,25 +184,41 @@ int main(int argc, char** argv) {
         barbeiros[i].barbeirosAtendeuCliente = &(barbeirosAtendeuCliente[i]);
         barbeiros[i].totalBarbeirosLiberados = &totalBarbeirosLiberados;
 
-        if (sem_init(&(barbeirosLiberado[i]), 0, 1) != 0) {            /* define se um barbeiro especifico estah livre (1) ou ocupado (0) */
+        while (sem_init(&(barbeirosLiberado[i]), 0, 1) != 0) {            /* define se um barbeiro especifico estah livre (1) ou ocupado (0) */
             printf("\nErro ao inicializar semaforo\n");
-            return -9;
+            #ifdef _WIN32
+            Sleep(1000);
+            #else
+            sleep(1);
+            #endif
         }
-        if (sem_init(&(barbeirosAcordado[i]), 0, 0) != 0) {            /* define se um barbeiro especifico estah acordado (1) ou dormindo (0) */
+        while (sem_init(&(barbeirosAcordado[i]), 0, 0) != 0) {            /* define se um barbeiro especifico estah acordado (1) ou dormindo (0) */
             printf("\nErro ao inicializar semaforo\n");
-            return -10;
+            #ifdef _WIN32
+            Sleep(1000);
+            #else
+            sleep(1);
+            #endif
         }
-        if (sem_init(&(barbeirosAtendeuCliente[i]), 0, 0) != 0) {      /* define se um barbeiro especifico terminou o atendimento ao cliente (1) ou ainda vai terminar (0) */
+        while (sem_init(&(barbeirosAtendeuCliente[i]), 0, 0) != 0) {      /* define se um barbeiro especifico terminou o atendimento ao cliente (1) ou ainda vai terminar (0) */
             printf("\nErro ao inicializar semaforo\n");
-            return -11;
+            #ifdef _WIN32
+            Sleep(1000);
+            #else
+            sleep(1);
+            #endif
         }
     }
 
     /* cria barbeiros */
     for (i = 0; i < quantBarbeiros; i++) {
-        if (pthread_create(&(barbeiros[i].thread), NULL, f_barbeiro, &(barbeiros[i])) != 0) {
+        while(pthread_create(&(barbeiros[i].thread), NULL, f_barbeiro, &(barbeiros[i])) != 0) {
             printf("\nErro ao criar thread barbeiro %d\n", i);
-            return -12;
+            #ifdef _WIN32
+            Sleep(1000);
+            #else
+            sleep(1);
+            #endif
         }
     }
 
