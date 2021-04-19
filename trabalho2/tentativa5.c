@@ -94,15 +94,15 @@ int main(int argc, char** argv) {
     barbeirosAtendeuCliente =  (sem_t*)malloc(sizeof(sem_t) * quantBarbeiros);
     cliente = (cliente_t*)malloc(sizeof(cliente_t));
  
-    sem_init(&cadeiraEspera, 0, quantCadeirasEspera);               /* a barbearia abre com todas cadeiras de espera livres  */ 
-    sem_init(&totalAtingiramObjetivo, 0, 0);                        /* contagem de barbeiros que atingiram objetivo  */ 
-    sem_init(&totalBarbeirosLiberados, 0, quantBarbeiros);          /* contagem de barbeiros liberados (livres), isto eh, os barbeiros que podem atender algum cliente se for acordado */ 
-    sem_init(&barbeariaFechou, 0, 0);                               /* sinalizar a main que o programa terminou  */ 
-    sem_init(&totalClientesVisitaramBarbearia, 0, 0);               /* contagem de cliente dentro da barbearia  */ 
-    pthread_mutex_init(&mutexClienteID, NULL);                      /* garantir que apenas um cliente pegue o ID cliente por vez  */ 
-    pthread_mutex_init(&mutexUltimoCliente, NULL);                  /* garantir que os clientes saiam um por vez para verificar se os barbeiros atingiram o objetivo, e o ultimo sinaliza a main que o programa terminou */ 
-    pthread_attr_init(&tattr);                                      /* inicializa variavel atributo da thread */ 
-    pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_DETACHED);   /* define atributo para detached (recursos podem ser reutilizados a medida que cada thread termina) */ 
+    sem_init(&cadeiraEspera, 0, quantCadeirasEspera);    /* a barbearia abre com todas cadeiras de espera livres  */ 
+    sem_init(&totalAtingiramObjetivo, 0, 0);   /* contagem de barbeiros que atingiram objetivo  */ 
+    sem_init(&totalBarbeirosLiberados, 0, quantBarbeiros);  /* contagem de barbeiros liberados (livres), isto eh, os barbeiros que podem atender algum cliente se for acordado */ 
+    sem_init(&barbeariaFechou, 0, 0);    /* sinalizar a main que o programa terminou  */ 
+    sem_init(&totalClientesVisitaramBarbearia, 0, 0);  /* contagem de cliente dentro da barbearia  */ 
+    pthread_mutex_init(&mutexClienteID, NULL);  /* garantir que apenas um cliente pegue o ID cliente por vez  */ 
+    pthread_mutex_init(&mutexUltimoCliente, NULL);  /* garantir que os clientes saiam um por vez para verificar se os barbeiros atingiram o objetivo, e o ultimo sinaliza a main que o programa terminou */ 
+    pthread_attr_init(&tattr);  /* inicializa variavel atributo da thread */ 
+    pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_DETACHED);  /* define atributo para detached (recursos podem ser reutilizados a medida que cada thread termina) */ 
 
     /* inicializa barbeiros */
     for (i = 0; i < quantBarbeiros; i++) {
@@ -121,7 +121,6 @@ int main(int argc, char** argv) {
         sem_init(&(barbeirosAtendeuCliente[i]);   /* define se um barbeiro especifico terminou o atendimento ao cliente (1) ou ainda vai terminar (0) */  
     }
 
-
     /* cria barbeiros */
     for (i = 0; i < quantBarbeiros; i++) {
         while(pthread_create(&(barbeiros[i].thread), NULL, f_barbeiro, &(barbeiros[i])) != 0) {
@@ -133,7 +132,6 @@ int main(int argc, char** argv) {
             #endif
         }
     }
-
 
     /* inicializa cliente */
     cliente->barbeirosLiberado = barbeirosLiberado;
@@ -183,7 +181,7 @@ int main(int argc, char** argv) {
         printf("barbeiro %d atendeu %d clientes\n", barbeiros[i].id, barbeiros[i].clientesAtendidos);
     }
 
-    /* solicita cancelamento  threads barbeiro */
+    /* solicita cancelamento das threads barbeiro */
     // https://wiki.sei.cmu.edu/confluence/display/c/POS44-C.+Do+not+use+signals+to+terminate+threads
     for (i = 0; i < quantBarbeiros; i++) {
         while(pthread_cancel(barbeiros[i].thread) != 0) {
@@ -197,7 +195,7 @@ int main(int argc, char** argv) {
     }
 
 
-    /* ponto de cancelamento */
+    /* ponto de cancelamento das threads barbeir */
     for (i = 0; i < quantBarbeiros; i++) {
         while(pthread_tryjoin_np(barbeiros[i].thread, NULL) != 0) {
             pthread_testcancel();
@@ -209,7 +207,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    /* libera memoria */
+    /* libera memoria / destroi variaveis */
     pthread_attr_destroy(&tattr);
     for(i = 0; i < quantBarbeiros; i++) {
         sem_destroy(&(barbeirosLiberado[i]));
