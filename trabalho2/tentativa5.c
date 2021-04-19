@@ -1,6 +1,6 @@
 /* TRABALHO 2: Jackson Willian Silva Agostinho - 20172BSI0335 - jacksonwillianjbv@gmail.com */
 
-#define _GNU_SOURCE
+// #define _GNU_SOURCE
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -184,16 +184,27 @@ int main(int argc, char** argv) {
     // https://wiki.sei.cmu.edu/confluence/display/c/POS44-C.+Do+not+use+signals+to+terminate+threads
     for (i = 0; i < quantBarbeiros; i++) {
         while(pthread_cancel(barbeiros[i].thread) != 0) {
-            printf("\nErro ao cancelar thread barbeiro %d\n", i);
+            printf("\nErro ao solicitar cancelamento da thread barbeiro %d\n", i);
             #ifdef _WIN32
             Sleep(1000);
             #else
             sleep(1);
             #endif
         }
+        pthread_testcancel(); /* cria um ponto de cancelamento para efetivar pedido de cancelamento pendente */
     }
 
-    /* ponto de cancelamento das threads barbeir */
+    #ifdef _WIN32
+    Sleep(1000);
+    #else
+    sleep(1);
+    #endif
+
+    /* Nem sempre realizar o join diretamente funciona, pois o pthread_testcancel anterior pode resultar em nada, uma vez que o sistema tem seu próprio tempo para realizar o cancelamento.
+     O ideal eh ter, anteriormente, outra thread(sem ser barbeiro) aguardando termino em um pthread_join (https://docs.oracle.com/cd/E19455-01/806-5257/6je9h032i/index.html#tlib-82704).
+     Uma alternativa que funcionou bem, sem falhar nos meus testes foi usar em um while com o pthread_tryjoin_np e caso retorne erro usar o pthread_testcancel. Era boa solucao, contudo dava problema 
+     na compilacao do Visual Studio 2019, por isso removi:
+    
     for (i = 0; i < quantBarbeiros; i++) {
         while(pthread_tryjoin_np(barbeiros[i].thread, NULL) != 0) {
             pthread_testcancel();
@@ -202,6 +213,12 @@ int main(int argc, char** argv) {
             #else
             sleep(1);
             #endif
+        }
+    }
+    */
+    for (i = 0; i < quantBarbeiros; i++) {
+        if(pthread_join(barbeiros[i].thread, NULL) != 0) {
+            printf("\nErro ao unir thread barbeiro %d\n", i);
         }
     }
 
@@ -243,6 +260,16 @@ void* f_barbeiro(void* argumento) {
         #if MODO_DEBUG
         printf("barbeiro %d acordou!\n", barbeiro->id);
         #endif
+
+        /* adicionar um sleep aqui gera quantidade de clientes antendidos menor e uniforme para cada barbeiro 
+        
+        #ifdef _WIN32
+        Sleep(10);
+        #else
+        sleep(1);
+        #endif
+
+        */
 
         barbeiro->clientesAtendidos++;
 
