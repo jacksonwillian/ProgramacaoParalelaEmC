@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
     sem_init(&totalAtingiramObjetivo, 0, 0);   /* contagem de barbeiros que atingiram objetivo  */ 
     sem_init(&totalBarbeirosLiberados, 0, quantBarbeiros);  /* contagem de barbeiros liberados (livres), isto eh, os barbeiros que podem atender algum cliente se for acordado */ 
     sem_init(&barbeariaFechou, 0, 0);    /* sinalizar a main que o programa terminou  */ 
-    sem_init(&totalClientesVisitaramBarbearia, 0, 0);  /* contagem de cliente dentro da barbearia  */ 
+    sem_init(&totalClientesVisitaramBarbearia, 0, 0);  /* contagem de clientes enviados para barbearia  */ 
     pthread_mutex_init(&mutexClienteID, NULL);  /* garantir que apenas um cliente pegue o ID cliente por vez  */ 
     pthread_mutex_init(&mutexUltimoCliente, NULL);  /* garantir que os clientes saiam um por vez para verificar se os barbeiros atingiram o objetivo, e o ultimo sinaliza a main que o programa terminou */ 
     pthread_attr_init(&tattr);  /* inicializa variavel atributo da thread */ 
@@ -122,6 +122,8 @@ int main(int argc, char** argv) {
 
     /* cria barbeiros */
     for (i = 0; i < quantBarbeiros; i++) {
+
+        // thread criada com a propriedade detached, nao precisa realizar join para liberar recurso ao termino
         while(pthread_create(&(barbeiros[i].thread), &tattr, f_barbeiro, &(barbeiros[i])) != 0) {
             printf("\nErro ao criar thread barbeiro %d\n", i);
             #ifdef _WIN32
@@ -155,6 +157,7 @@ int main(int argc, char** argv) {
         */
         sem_post(&totalClientesVisitaramBarbearia);
 
+        // thread criada com a propriedade detached, nao precisa realizar join para liberar recurso ao termino
         while (pthread_create(&(cliente->thread), &tattr, f_cliente, cliente) != 0) {
             printf("\nErro ao criar thread cliente %d\n", quantThreadCriadas);
             #ifdef _WIN32
@@ -193,13 +196,16 @@ int main(int argc, char** argv) {
         
     }
 
-    pthread_testcancel(); /* cria um ponto de cancelamento para efetivar pedido de cancelamento pendente */
+    pthread_testcancel(); /* cria um ponto de cancelamento para efetivar pedido de cancelamento pendente 
+                            https://docs.oracle.com/cd/E19455-01/806-5257/6je9h032i/index.html#tlib-82704
+                          */
 
     #ifdef _WIN32
     Sleep(1000);
     #else
     sleep(1);
     #endif
+
 
     /* destroi variaveis e libera memoria */
     pthread_attr_destroy(&tattr);
@@ -240,7 +246,7 @@ void* f_barbeiro(void* argumento) {
         printf("barbeiro %d acordou!\n", barbeiro->id);
         #endif
 
-        /* adicionar um sleep aqui gera quantidade de clientes antendidos menor e uniforme para cada barbeiro 
+        /* adicionar um sleep aqui gera quantidades de clientes antendidos menor e uniforme para cada barbeiro 
         
         #ifdef _WIN32
         Sleep(10);
