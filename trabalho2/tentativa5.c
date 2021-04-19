@@ -14,8 +14,11 @@
 #include <time.h>
 
 
-/* MODO_DEBUG definido com valor 0 desativa os prints de debug, e definido com valor 1 ativa os prints de debug */
-#define MODO_DEBUG 1           
+/* MODO_DEBUG 
+ * definido com valor 0 desativa os prints de debug,
+ * definido com valor 1 ativa os prints de debug. 
+ */
+#define MODO_DEBUG 0           
 
 /* contagem do id dos clientes usado somente para debug */
 int CLIENTE_ULTIMO_ID = 0;
@@ -152,11 +155,14 @@ int main(int argc, char** argv) {
     while (atingiramObjetivo < quantBarbeiros) {
         
         /* incrementa a quantidade de clientes que visitou/ vai visitar a barbearia
-           para o programa saber que ainda vai ser enviado um novo cliente
-        */
+         *  para o programa saber que ainda vai ser enviado um novo cliente
+         */
         sem_post(&totalClientesVisitaramBarbearia);
 
-        // thread criada com a propriedade detached, nao precisa realizar join para liberar recurso ao termino
+        /* thread criada com a propriedade detached, nao precisa realizar join para liberar recurso,
+         * os recursos sao liberados automaticamente apos o termino da thread.
+         * Obs.: Nao pode realizar o join.
+         */
         while (pthread_create(&(cliente->thread), &tattr, f_cliente, cliente) != 0) {
             printf("\nErro ao criar thread cliente %d\n", quantThreadCriadas);
             #ifdef _WIN32
@@ -184,10 +190,10 @@ int main(int argc, char** argv) {
     }
     
 
-    /* solicita cancelamento das threads barbeiro */
+    /* cria pedido de cancelamento das threads barbeiros */
     for (i = 0; i < quantBarbeiros; i++) {
         while(pthread_cancel(barbeiros[i].thread) != 0) {
-            printf("\nErro ao solicitar cancelamento da thread barbeiro %d\n", i);
+            printf("\nErro ao criar pedido de cancelamento da thread barbeiro %d\n", i);
             #ifdef _WIN32
             Sleep(1000);
             #else
@@ -204,8 +210,14 @@ int main(int argc, char** argv) {
 
 
     /* libera recursos dos barbeiros */
+    void *status=NULL;
     for (i = 0; i < quantBarbeiros; i++) {
-        if (pthread_join(barbeiros[i].thread, NULL) != 0) {
+
+        /* quando uma thread cancelada eh encerrada, uma junção usando pthread_join()
+         * obtem PTHREAD_CANCELED como status de saida.
+         * https://man7.org/linux/man-pages/man3/pthread_join.3.html
+         */
+        while(pthread_join(barbeiros[i].thread, &status) != 0) {
             printf("\nErro ao unir thread barbeiro %d\n", i);
             #ifdef _WIN32
             Sleep(1000);
@@ -213,6 +225,12 @@ int main(int argc, char** argv) {
             sleep(1);
             #endif
         }
+
+        #if MODO_DEBUG
+        if (status == PTHREAD_CANCELED) {
+            printf("thread barbeiro %d cancelada\n", i);
+        }
+        #endif
     }
 
     /* destroi variaveis e libera memoria */
@@ -251,7 +269,12 @@ void* f_barbeiro(void* argumento) {
 
         sem_wait(barbeiro->barbeirosAcordado); /* barbeiro estah dormindo */
 
-        pthread_testcancel(); /* ponto de cancelamento */
+        /* ponto de cancelamento 
+         * se nenhum pedido de cancelamento está pendente, então uma chamada para
+         * pthread_testcancel() não tem efeito. 
+         * https://man7.org/linux/man-pages/man3/pthread_testcancel.3.html 
+         */
+        pthread_testcancel(); 
 
         #if MODO_DEBUG
         printf("barbeiro %d acordou!\n", barbeiro->id);
@@ -350,8 +373,8 @@ void* f_cliente(void* argumento) {
     sem_wait(cliente->totalClientesVisitaramBarbearia);
 
     /*  mutex para garantir que os clientes saiam um por vez para verificar se os barbeiros atingiram o objetivo,
-        e o ultimo sinaliza a main que o programa terminou
-    */
+     *   e o ultimo sinaliza a main que o programa terminou
+     */
     pthread_mutex_lock(cliente->mutexUltimoCliente);
 
     int totalBarbeirosConcluiramObjetivo = 0;
