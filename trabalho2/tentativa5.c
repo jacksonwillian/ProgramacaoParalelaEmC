@@ -88,11 +88,11 @@ int main(int argc, char** argv) {
     quantBarbeiros = atoi(argv[1]);
     quantCadeirasEspera = atoi(argv[2]);
     quantMinimaClientes = atoi(argv[3]);
-    barbeiros = malloc(sizeof(barbeiro_t) * quantBarbeiros);
-    barbeirosLiberado = malloc(sizeof(sem_t) * quantBarbeiros);
-    barbeirosAcordado = malloc(sizeof(sem_t) * quantBarbeiros);
-    barbeirosAtendeuCliente = malloc(sizeof(sem_t) * quantBarbeiros);
-    cliente = malloc(sizeof(cliente_t));
+    barbeiros = (barbeiro_t*)malloc(sizeof(barbeiro_t) * quantBarbeiros);
+    barbeirosLiberado = (sem_t*)malloc(sizeof(sem_t) * quantBarbeiros);
+    barbeirosAcordado =  (sem_t*)malloc(sizeof(sem_t) * quantBarbeiros);
+    barbeirosAtendeuCliente =  (sem_t*)malloc(sizeof(sem_t) * quantBarbeiros);
+    cliente = (cliente_t*)malloc(sizeof(cliente_t));
  
     while (sem_init(&cadeiraEspera, 0, quantCadeirasEspera) != 0) {      /* a barbearia abre com todas cadeiras de espera livres */
         printf("\nErro ao inicializar semaforo\n");
