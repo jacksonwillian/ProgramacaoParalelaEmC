@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
 
         sem_init(&(barbeirosLiberado[i]), 0, 1);  /* define se um barbeiro especifico estah livre (1) ou ocupado (0) */  
         sem_init(&(barbeirosAcordado[i]), 0, 0);  /* define se um barbeiro especifico estah acordado (1) ou dormindo (0) */  
-        sem_init(&(barbeirosAtendeuCliente[i]);   /* define se um barbeiro especifico terminou o atendimento ao cliente (1) ou ainda vai terminar (0) */  
+        sem_init(&(barbeirosAtendeuCliente[i]), 0, 0);   /* define se um barbeiro especifico terminou o atendimento ao cliente (1) ou ainda vai terminar (0) */  
     }
 
     /* cria barbeiros */
