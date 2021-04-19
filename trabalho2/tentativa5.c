@@ -287,6 +287,10 @@ void* f_barbeiro(void* argumento) {
             printf("barbeiro %d atingiu seu objetivo!\n", barbeiro->id);
             #endif
             sem_post(barbeiro->totalAtingiramObjetivo);
+
+            #ifdef _WIN32
+            Sleep(1);
+            #endif
         }
 
         sem_post(barbeiro->barbeirosAtendeuCliente); /* barbeiro terminou de atender o cliente */
