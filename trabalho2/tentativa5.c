@@ -94,83 +94,15 @@ int main(int argc, char** argv) {
     barbeirosAtendeuCliente =  (sem_t*)malloc(sizeof(sem_t) * quantBarbeiros);
     cliente = (cliente_t*)malloc(sizeof(cliente_t));
  
-    while (sem_init(&cadeiraEspera, 0, quantCadeirasEspera) != 0) {      /* a barbearia abre com todas cadeiras de espera livres */
-        printf("\nErro ao inicializar semaforo\n");
-        #ifdef _WIN32
-        Sleep(1000);
-        #else
-        sleep(1);
-        #endif
-    }
-    while (sem_init(&totalAtingiramObjetivo, 0, 0) != 0) {               /* contagem de barbeiros que atingiram objetivo  */
-        printf("\nErro ao inicializar semaforo\n");
-        #ifdef _WIN32
-        Sleep(1000);
-        #else
-        sleep(1);
-        #endif
-    }
-    while (sem_init(&totalBarbeirosLiberados, 0, quantBarbeiros) != 0) {  /* contagem de barbeiros liberados (livres), isto eh, os barbeiros que podem atender algum cliente se for acordado */
-        printf("\nErro ao inicializar semaforo\n");
-        #ifdef _WIN32
-        Sleep(1000);
-        #else
-        sleep(1);
-        #endif
-    }
-    while (sem_init(&barbeariaFechou, 0, 0) != 0) {                       /* sinalizar a main que o programa terminou */
-        printf("\nErro ao inicializar semaforo\n");
-        #ifdef _WIN32
-        Sleep(1000);
-        #else
-        sleep(1);
-        #endif
-    }
-    while (sem_init(&totalClientesVisitaramBarbearia, 0, 0) != 0) {         /* contagem de cliente dentro da barbearia */
-        printf("\nErro ao inicializar semaforo\n");
-            #ifdef _WIN32
-            Sleep(1000);
-            #else
-            sleep(1);
-            #endif
-    }
-    while (pthread_mutex_init(&mutexClienteID, NULL) != 0) {             /* garantir que apenas um cliente pegue o ID cliente por vez */
-        printf("\nErro ao inicializar mutex\n");
-        #ifdef _WIN32
-        Sleep(1000);
-        #else
-        sleep(1);
-        #endif
-    }
-    while (pthread_mutex_init(&mutexUltimoCliente, NULL) != 0) {         /* garantir que os clientes saiam um por vez para verificar se os barbeiros atingiram o objetivo, e o ultimo sinaliza a main que o programa terminou */
-        printf("\nErro ao inicializar mutex\n");
-        #ifdef _WIN32
-        Sleep(1000);
-        #else
-        sleep(1);
-        #endif
-    }
-
-    /* inicializa variavel atributo thread */
-    while (pthread_attr_init(&tattr) != 0) {
-        printf("Erro ao inicializar o thread atributo \n");
-        #ifdef _WIN32
-        Sleep(1000);
-        #else
-        sleep(1);
-        #endif
-    }
-
-    /* define atributo para detached (recursos podem ser reutilizados a medida que cada thread termina) */
-    while (pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_DETACHED) != 0) {
-        printf("Erro ao definir atributo da thread \n");
-        #ifdef _WIN32
-        Sleep(1000);
-        #else
-        sleep(1);
-        #endif
-    }
-
+    sem_init(&cadeiraEspera, 0, quantCadeirasEspera);               /* a barbearia abre com todas cadeiras de espera livres  */ 
+    sem_init(&totalAtingiramObjetivo, 0, 0);                        /* contagem de barbeiros que atingiram objetivo  */ 
+    sem_init(&totalBarbeirosLiberados, 0, quantBarbeiros);          /* contagem de barbeiros liberados (livres), isto eh, os barbeiros que podem atender algum cliente se for acordado */ 
+    sem_init(&barbeariaFechou, 0, 0);                               /* sinalizar a main que o programa terminou  */ 
+    sem_init(&totalClientesVisitaramBarbearia, 0, 0);               /* contagem de cliente dentro da barbearia  */ 
+    pthread_mutex_init(&mutexClienteID, NULL);                      /* garantir que apenas um cliente pegue o ID cliente por vez  */ 
+    pthread_mutex_init(&mutexUltimoCliente, NULL);                  /* garantir que os clientes saiam um por vez para verificar se os barbeiros atingiram o objetivo, e o ultimo sinaliza a main que o programa terminou */ 
+    pthread_attr_init(&tattr);                                      /* inicializa variavel atributo da thread */ 
+    pthread_attr_setdetachstate(&tattr, PTHREAD_CREATE_DETACHED);   /* define atributo para detached (recursos podem ser reutilizados a medida que cada thread termina) */ 
 
     /* inicializa barbeiros */
     for (i = 0; i < quantBarbeiros; i++) {
@@ -184,31 +116,11 @@ int main(int argc, char** argv) {
         barbeiros[i].barbeirosAtendeuCliente = &(barbeirosAtendeuCliente[i]);
         barbeiros[i].totalBarbeirosLiberados = &totalBarbeirosLiberados;
 
-        while (sem_init(&(barbeirosLiberado[i]), 0, 1) != 0) {            /* define se um barbeiro especifico estah livre (1) ou ocupado (0) */
-            printf("\nErro ao inicializar semaforo\n");
-            #ifdef _WIN32
-            Sleep(1000);
-            #else
-            sleep(1);
-            #endif
-        }
-        while (sem_init(&(barbeirosAcordado[i]), 0, 0) != 0) {            /* define se um barbeiro especifico estah acordado (1) ou dormindo (0) */
-            printf("\nErro ao inicializar semaforo\n");
-            #ifdef _WIN32
-            Sleep(1000);
-            #else
-            sleep(1);
-            #endif
-        }
-        while (sem_init(&(barbeirosAtendeuCliente[i]), 0, 0) != 0) {      /* define se um barbeiro especifico terminou o atendimento ao cliente (1) ou ainda vai terminar (0) */
-            printf("\nErro ao inicializar semaforo\n");
-            #ifdef _WIN32
-            Sleep(1000);
-            #else
-            sleep(1);
-            #endif
-        }
+        sem_init(&(barbeirosLiberado[i]), 0, 1);  /* define se um barbeiro especifico estah livre (1) ou ocupado (0) */  
+        sem_init(&(barbeirosAcordado[i]), 0, 0);  /* define se um barbeiro especifico estah acordado (1) ou dormindo (0) */  
+        sem_init(&(barbeirosAtendeuCliente[i]);   /* define se um barbeiro especifico terminou o atendimento ao cliente (1) ou ainda vai terminar (0) */  
     }
+
 
     /* cria barbeiros */
     for (i = 0; i < quantBarbeiros; i++) {
@@ -223,7 +135,7 @@ int main(int argc, char** argv) {
     }
 
 
-    // inicializa cliente
+    /* inicializa cliente */
     cliente->barbeirosLiberado = barbeirosLiberado;
     cliente->cadeiraEspera = &cadeiraEspera;
     cliente->barbeirosAcordado = barbeirosAcordado;
@@ -236,11 +148,12 @@ int main(int argc, char** argv) {
     cliente->barbeariaFechou = &barbeariaFechou;
     cliente->totalClientesVisitaramBarbearia = &totalClientesVisitaramBarbearia;
 
+    /* cria clientes */
     quantThreadCriadas = 0;
     atingiramObjetivo = 0;
     while (atingiramObjetivo < quantBarbeiros) {
         
-        /* incrementa a quantidade de clientes que vai visitar/ visitou a barbearia
+        /* incrementa a quantidade de clientes que vai visitar
            para o programa saber que ainda vai ser enviado um novo cliente
         */
         sem_post(&totalClientesVisitaramBarbearia);
@@ -261,7 +174,7 @@ int main(int argc, char** argv) {
         quantThreadCriadas++;
     }
 
-    // espera o sinal que avisa que ultimo cliente saiu da barbearia
+    /* espera o sinal que avisa que ultimo cliente saiu da barbearia e ela fechou */
     sem_wait(&barbeariaFechou);
     
 
@@ -270,7 +183,7 @@ int main(int argc, char** argv) {
         printf("barbeiro %d atendeu %d clientes\n", barbeiros[i].id, barbeiros[i].clientesAtendidos);
     }
 
-    /* cancela threads barbeiro */
+    /* solicita cancelamento  threads barbeiro */
     // https://wiki.sei.cmu.edu/confluence/display/c/POS44-C.+Do+not+use+signals+to+terminate+threads
     for (i = 0; i < quantBarbeiros; i++) {
         while(pthread_cancel(barbeiros[i].thread) != 0) {
@@ -421,25 +334,16 @@ void* f_cliente(void* argumento) {
         #endif
     }
 
-
-    /*
-        mutex para garantir que os clientes saiam um por vez para verificar se os barbeiros atingiram o objetivo,
-        e o ultimo sinaliza a main que o programa terminou
-    */
-
     sem_wait(cliente->totalClientesVisitaramBarbearia);
 
+    /*  mutex para garantir que os clientes saiam um por vez para verificar se os barbeiros atingiram o objetivo,
+        e o ultimo sinaliza a main que o programa terminou
+    */
     pthread_mutex_lock(cliente->mutexUltimoCliente);
 
     int totalBarbeirosConcluiramObjetivo = 0;
-
     /* obtem a quantidade de barbeiros que ja atingiram o objetivo */
-    while (true) {
-
-        if (sem_getvalue(cliente->totalAtingiramObjetivo, &totalBarbeirosConcluiramObjetivo) == 0) {
-            break;
-        }
-
+    while (sem_getvalue(cliente->totalAtingiramObjetivo, &totalBarbeirosConcluiramObjetivo) != 0) {
         #ifdef _WIN32
         Sleep(1000);
         #else
@@ -450,23 +354,17 @@ void* f_cliente(void* argumento) {
     if (totalBarbeirosConcluiramObjetivo == cliente->totalBarbeiros) {
 
         int totalClientesVisitaram = 0;
-
         /* obtem a quantidade de clientes que visitaram/entraram */
-        while (true) {
-            if (sem_getvalue(cliente->totalClientesVisitaramBarbearia, &totalClientesVisitaram) == 0) {
-                break;
-            }
-
+        while (sem_getvalue(cliente->totalClientesVisitaramBarbearia, &totalClientesVisitaram) != 0) {
             #ifdef _WIN32
             Sleep(1000);
             #else
             sleep(1);
             #endif
-
         }
 
         if (totalClientesVisitaram == 0) {
-            /* sinalizar na main que o ultimo cliente que entrou/visitou da barbearia apos todos barbeiros atingirem o objetivo */
+            /* sinalizar na main que saiu o ultimo cliente que entrou/visitou a barbearia apos todos barbeiros atingirem o objetivo */
             sem_post(cliente->barbeariaFechou);
         }
     }
