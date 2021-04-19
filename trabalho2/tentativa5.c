@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
     atingiramObjetivo = 0;
     while (atingiramObjetivo < quantBarbeiros) {
         
-        /* incrementa a quantidade de clientes que vai visitar
+        /* incrementa a quantidade de clientes que visitou/ vai visitar a barbearia
            para o programa saber que ainda vai ser enviado um novo cliente
         */
         sem_post(&totalClientesVisitaramBarbearia);
@@ -175,7 +175,6 @@ int main(int argc, char** argv) {
     /* espera o sinal que avisa que ultimo cliente saiu da barbearia e ela fechou */
     sem_wait(&barbeariaFechou);
     
-
     /* exibi a quantidade de clientes que cada barbeiro atendeu */
     for (i = 0; i < quantBarbeiros; i++) {
         printf("barbeiro %d atendeu %d clientes\n", barbeiros[i].id, barbeiros[i].clientesAtendidos);
@@ -193,7 +192,6 @@ int main(int argc, char** argv) {
             #endif
         }
     }
-
 
     /* ponto de cancelamento das threads barbeir */
     for (i = 0; i < quantBarbeiros; i++) {
@@ -229,7 +227,6 @@ int main(int argc, char** argv) {
     
     return 0;
 }
-
 
 
 void* f_barbeiro(void* argumento) {
