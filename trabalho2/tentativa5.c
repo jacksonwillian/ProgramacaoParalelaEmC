@@ -15,7 +15,7 @@
 
 
 /* MODO_DEBUG definido com valor 0 desativa os prints de debug, e definido com valor 1 ativa os prints de debug */
-#define MODO_DEBUG 0           
+#define MODO_DEBUG 1           
 
 /* contagem do id dos clientes usado somente para debug */
 int CLIENTE_ULTIMO_ID = 0;
@@ -123,8 +123,7 @@ int main(int argc, char** argv) {
     /* cria barbeiros */
     for (i = 0; i < quantBarbeiros; i++) {
 
-        // thread criada com a propriedade detached, nao precisa realizar join para liberar recurso ao termino
-        while(pthread_create(&(barbeiros[i].thread), &tattr, f_barbeiro, &(barbeiros[i])) != 0) {
+        while(pthread_create(&(barbeiros[i].thread), NULL, f_barbeiro, &(barbeiros[i])) != 0) {
             printf("\nErro ao criar thread barbeiro %d\n", i);
             #ifdef _WIN32
             Sleep(1000);
@@ -174,16 +173,18 @@ int main(int argc, char** argv) {
         quantThreadCriadas++;
     }
 
+
     /* espera o sinal que avisa que ultimo cliente saiu da barbearia e ela fechou */
     sem_wait(&barbeariaFechou);
     
+
     /* exibi a quantidade de clientes que cada barbeiro atendeu */
     for (i = 0; i < quantBarbeiros; i++) {
         printf("barbeiro %d atendeu %d clientes\n", barbeiros[i].id, barbeiros[i].clientesAtendidos);
     }
+    
 
     /* solicita cancelamento das threads barbeiro */
-    // https://wiki.sei.cmu.edu/confluence/display/c/POS44-C.+Do+not+use+signals+to+terminate+threads
     for (i = 0; i < quantBarbeiros; i++) {
         while(pthread_cancel(barbeiros[i].thread) != 0) {
             printf("\nErro ao solicitar cancelamento da thread barbeiro %d\n", i);
@@ -193,19 +194,26 @@ int main(int argc, char** argv) {
             sleep(1);
             #endif
         }
-        
     }
 
-    pthread_testcancel(); /* cria um ponto de cancelamento para efetivar pedido de cancelamento pendente 
-                            https://docs.oracle.com/cd/E19455-01/806-5257/6je9h032i/index.html#tlib-82704
-                          */
 
-    #ifdef _WIN32
-    Sleep(1000);
-    #else
-    sleep(1);
-    #endif
+    /* acorda barbeiros para eles cairem no ponto de cancelamento */
+    for (i = 0; i < quantBarbeiros; i++) {
+        sem_post(barbeiros[i].barbeirosAcordado);
+    }
 
+
+    /* libera recursos dos barbeiros */
+    for (i = 0; i < quantBarbeiros; i++) {
+        if (pthread_join(barbeiros[i].thread, NULL) != 0) {
+            printf("\nErro ao unir thread barbeiro %d\n", i);
+            #ifdef _WIN32
+            Sleep(1000);
+            #else
+            sleep(1);
+            #endif
+        }
+    }
 
     /* destroi variaveis e libera memoria */
     pthread_attr_destroy(&tattr);
@@ -240,21 +248,14 @@ void* f_barbeiro(void* argumento) {
     #endif
 
     while (true) {
+
         sem_wait(barbeiro->barbeirosAcordado); /* barbeiro estah dormindo */
+
+        pthread_testcancel(); /* ponto de cancelamento */
 
         #if MODO_DEBUG
         printf("barbeiro %d acordou!\n", barbeiro->id);
         #endif
-
-        /* adicionar um sleep aqui gera quantidades de clientes antendidos menor e uniforme para cada barbeiro 
-        
-        #ifdef _WIN32
-        Sleep(10);
-        #else
-        sleep(1);
-        #endif
-
-        */
 
         barbeiro->clientesAtendidos++;
 
