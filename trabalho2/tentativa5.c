@@ -282,7 +282,7 @@ void* f_barbeiro(void* argumento) {
     barbeiro_t* barbeiro = (barbeiro_t*)argumento;
 
     #if MODO_DEBUG
-    printf("barbeiro id %d entrou\n", barbeiro->id);
+    printf("barbeiro %d entrou\n", barbeiro->id);
     #endif
 
     sem_post(barbeiro->barbeiroLiberado); /* barbeiro chegou e estah livre */
@@ -300,7 +300,7 @@ void* f_barbeiro(void* argumento) {
         pthread_testcancel(); 
 
         #if MODO_DEBUG
-        printf("barbeiro %d acordou e estah atendendo um cliente!\n", barbeiro->id);
+        printf("barbeiro %d acordou e estah atendendo um cliente\n", barbeiro->id);
         #endif
         
         barbeiro->clientesAtendidos++;
@@ -368,7 +368,7 @@ void* f_cliente(void* argumento) {
                     sem_wait(&(cliente->barbeirosAtendeuCliente[i])); /* cliente espera, na cadeira do barbeiro, o fim do atendimento */
                     clienteAtendido = true;
                     #if MODO_DEBUG
-                    printf("cliente %d foi atendido pelo barbeiro %d e jah estah saindo \n", clienteID, i);
+                    printf("cliente %d ja foi atendido pelo barbeiro %d e estah saindo!\n", clienteID, i);
                     #endif
                     break;
                 } // fim if
