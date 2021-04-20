@@ -314,7 +314,7 @@ void* f_barbeiro(void* argumento) {
         }
 
         #if MODO_DEBUG
-        printf("barbeiro %d terminou de atender o cliente! \n", barbeiro->id);
+        printf("barbeiro %d terminou de atender o cliente e estah livre!\n", barbeiro->id);
         #endif
 
         sem_post(barbeiro->barbeirosAtendeuCliente); /* barbeiro terminou de atender o cliente */
