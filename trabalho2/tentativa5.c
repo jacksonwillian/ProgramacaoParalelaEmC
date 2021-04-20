@@ -314,6 +314,12 @@ void* f_barbeiro(void* argumento) {
 
         sem_post(barbeiro->barbeirosAtendeuCliente); /* barbeiro terminou de atender o cliente */
 
+        #ifdef _WIN32
+        Sleep(1);
+        #else
+        usleep(1);
+        #endif
+
         sem_post(barbeiro->barbeiroLiberado); /* barbeiro estah livre */
         sem_post(barbeiro->totalBarbeirosLiberados); /* incrementa total barbeiros liberados */
     }
