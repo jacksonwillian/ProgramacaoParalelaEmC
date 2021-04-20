@@ -127,7 +127,10 @@ int main(int argc, char** argv) {
     for (i = 0; i < quantBarbeiros; i++) {
 
         while(pthread_create(&(barbeiros[i].thread), NULL, f_barbeiro, &(barbeiros[i])) != 0) {
+            #if MODO_DEBUG
             printf("\nErro ao criar thread barbeiro %d\n", i);
+            #endif   
+
             #ifdef _WIN32
             Sleep(1000);
             #else
@@ -164,7 +167,10 @@ int main(int argc, char** argv) {
          * Obs.: Nao pode realizar o join.
          */
         while (pthread_create(&(cliente->thread), &tattr, f_cliente, cliente) != 0) {
+            #if MODO_DEBUG
             printf("\nErro ao criar thread cliente %d\n", quantThreadCriadas);
+            #endif
+
             #ifdef _WIN32
             Sleep(1000);
             #else
@@ -193,7 +199,10 @@ int main(int argc, char** argv) {
     /* cria pedido de cancelamento das threads barbeiros */
     for (i = 0; i < quantBarbeiros; i++) {
         while(pthread_cancel(barbeiros[i].thread) != 0) {
+            #if MODO_DEBUG
             printf("\nErro ao criar pedido de cancelamento da thread barbeiro %d\n", i);
+            #endif
+            
             #ifdef _WIN32
             Sleep(1000);
             #else
@@ -218,7 +227,10 @@ int main(int argc, char** argv) {
          * https://man7.org/linux/man-pages/man3/pthread_join.3.html
          */
         while(pthread_join(barbeiros[i].thread, &status) != 0) {
+            #if MODO_DEBUG
             printf("\nErro ao unir thread barbeiro %d\n", i);
+            #endif   
+
             #ifdef _WIN32
             Sleep(1000);
             #else
@@ -286,6 +298,7 @@ void* f_barbeiro(void* argumento) {
             #if MODO_DEBUG
             printf("barbeiro %d atingiu seu objetivo!\n", barbeiro->id);
             #endif
+            
             sem_post(barbeiro->totalAtingiramObjetivo);
 
             #ifdef _WIN32
