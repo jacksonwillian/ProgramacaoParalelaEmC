@@ -298,6 +298,13 @@ void* f_barbeiro(void* argumento) {
         printf("barbeiro %d acordou e estah atendendo um cliente\n", barbeiro->id);
         #endif
         
+        /* barbeiro estah atendendo cliente */
+        #ifdef _WIN32
+        Sleep(1);
+        #else
+        usleep(1);
+        #endif
+
         barbeiro->clientesAtendidos++;
 
         if (barbeiro->clientesAtendidos == barbeiro->quantMinimaClientes) {
@@ -313,12 +320,6 @@ void* f_barbeiro(void* argumento) {
         #endif
 
         sem_post(barbeiro->barbeirosAtendeuCliente); /* barbeiro terminou de atender o cliente */
-
-        #ifdef _WIN32
-        Sleep(1);
-        #else
-        usleep(1);
-        #endif
 
         sem_post(barbeiro->barbeiroLiberado); /* barbeiro estah livre */
         sem_post(barbeiro->totalBarbeirosLiberados); /* incrementa total barbeiros liberados */
