@@ -64,7 +64,7 @@ typedef struct {
     pthread_mutex_t* mutexClienteID;
     pthread_mutex_t* mutexUltimoCliente;
     sem_t* barbeariaFechou;
-    sem_t* totalClientesVisitaramBarbearia;   
+    sem_t* totalClientesAtivo;   
 } cliente_t;
 
 
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
     cliente_t* cliente;
     sem_t* barbeirosLiberado, * barbeirosAcordado, * barbeirosAtendeuCliente;
     sem_t cadeiraEspera, totalBarbeirosLiberados, totalAtingiramObjetivo;
-    sem_t barbeariaFechou, totalClientesVisitaramBarbearia;
+    sem_t barbeariaFechou, totalClientesAtivo;
     pthread_mutex_t mutexClienteID, mutexUltimoCliente;
     pthread_attr_t tattr;
 
@@ -108,7 +108,7 @@ int main(int argc, char** argv) {
     sem_init(&totalAtingiramObjetivo, 0, 0);   /* contagem de barbeiros que atingiram objetivo  */ 
     sem_init(&totalBarbeirosLiberados, 0, 0);  /* contagem de barbeiros liberados (livres), isto eh, os barbeiros que podem atender algum cliente se for acordado */ 
     sem_init(&barbeariaFechou, 0, 0);    /* sinalizar a main que o programa terminou  */ 
-    sem_init(&totalClientesVisitaramBarbearia, 0, 0);  /* contagem de clientes enviados para barbearia  */ 
+    sem_init(&totalClientesAtivo, 0, 0);  /* contagem atual de clientes na barbearia (total de threads ativas que estao na funcao f_cliente)  */ 
     pthread_mutex_init(&mutexClienteID, NULL);  /* garantir que apenas um cliente pegue o ID cliente por vez  */ 
     pthread_mutex_init(&mutexUltimoCliente, NULL);  /* garantir que os clientes saiam um por vez para verificar se os barbeiros atingiram o objetivo, e o ultimo sinaliza a main que o programa terminou */ 
     pthread_attr_init(&tattr);  /* inicializa variavel atributo da thread */ 
@@ -158,17 +158,17 @@ int main(int argc, char** argv) {
     cliente->totalBarbeirosLiberados = &totalBarbeirosLiberados;
     cliente->totalAtingiramObjetivo = &totalAtingiramObjetivo;
     cliente->barbeariaFechou = &barbeariaFechou;
-    cliente->totalClientesVisitaramBarbearia = &totalClientesVisitaramBarbearia;
+    cliente->totalClientesAtivo = &totalClientesAtivo;
 
     /* cria clientes */
     quantThreadCriadas = 0;
     atingiramObjetivo = 0;
     while (atingiramObjetivo < quantBarbeiros) {
         
-        /* incrementa a quantidade de clientes que visitou/ vai visitar a barbearia
+        /* incrementa a quantidade de clientes ativos na barbearia
          *  para o programa saber que ainda vai ser enviado um novo cliente
          */
-        sem_post(&totalClientesVisitaramBarbearia);
+        sem_post(&totalClientesAtivo);
 
         /* thread criada com a propriedade detached, nao precisa realizar join para liberar recurso,
          * os recursos sao liberados automaticamente apos o termino da thread.
@@ -264,7 +264,7 @@ int main(int argc, char** argv) {
     sem_destroy(&cadeiraEspera);
     sem_destroy(&totalBarbeirosLiberados);
     sem_destroy(&totalAtingiramObjetivo);
-    sem_destroy(&totalClientesVisitaramBarbearia);
+    sem_destroy(&totalClientesAtivo);
     pthread_mutex_destroy(&mutexClienteID);
     pthread_mutex_destroy(&mutexUltimoCliente);
     free(barbeiros);
@@ -388,7 +388,7 @@ void* f_cliente(void* argumento) {
         #endif
     }
 
-    sem_wait(cliente->totalClientesVisitaramBarbearia);
+    sem_wait(cliente->totalClientesAtivo);
 
     /*  mutex para garantir que os clientes saiam um por vez para verificar se os barbeiros atingiram o objetivo,
      *   e o ultimo sinaliza a main que o programa terminou
@@ -407,9 +407,9 @@ void* f_cliente(void* argumento) {
 
     if (totalBarbeirosConcluiramObjetivo == cliente->totalBarbeiros) {
 
-        int totalClientesVisitaram = 0;
-        /* obtem a quantidade de clientes que visitaram/entraram */
-        while (sem_getvalue(cliente->totalClientesVisitaramBarbearia, &totalClientesVisitaram) != 0) {
+        int totalClientesAtual = 0;
+        /* obtem a quantidade atual de clientes que estao ativos */
+        while (sem_getvalue(cliente->totalClientesAtivo, &totalClientesAtual) != 0) {
             #ifdef _WIN32
             Sleep(10);
             #else
@@ -417,7 +417,7 @@ void* f_cliente(void* argumento) {
             #endif
         }
 
-        if (totalClientesVisitaram == 0) {
+        if (totalClientesAtual == 0) {
             /* sinalizar na main que saiu o ultimo cliente que entrou/visitou a barbearia apos todos barbeiros atingirem o objetivo */
             sem_post(cliente->barbeariaFechou);
         }
