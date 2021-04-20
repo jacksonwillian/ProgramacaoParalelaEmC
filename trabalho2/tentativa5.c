@@ -247,8 +247,8 @@ int main(int argc, char** argv) {
         }
 
         #if MODO_DEBUG
-        if (status == PTHREAD_CANCELED) {
-            printf("thread barbeiro %d cancelada\n", i);
+        if (status != PTHREAD_CANCELED) {
+            printf("thread barbeiro %d nao foi cancelada\n", i);
         }
         #endif
     }
