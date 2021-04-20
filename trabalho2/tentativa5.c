@@ -18,7 +18,15 @@
  * definido com valor 0 desativa os prints de debug,
  * definido com valor 1 ativa os prints de debug. 
  */
-#define MODO_DEBUG 0           
+#define MODO_DEBUG 0      
+
+
+/* MODO_ERROR
+ * definido com valor 0 desativa os prints de erro,
+ * definido com valor 1 ativa os prints de erro. 
+ */
+#define MODO_ERROR 0
+  
 
 /* contagem do id dos clientes usado somente para debug */
 int CLIENTE_ULTIMO_ID = 0;
@@ -127,7 +135,7 @@ int main(int argc, char** argv) {
     for (i = 0; i < quantBarbeiros; i++) {
 
         while(pthread_create(&(barbeiros[i].thread), NULL, f_barbeiro, &(barbeiros[i])) != 0) {
-            #if MODO_DEBUG
+            #if MODO_ERROR
             printf("\nErro ao criar thread barbeiro %d\n", i);
             #endif   
 
@@ -167,7 +175,7 @@ int main(int argc, char** argv) {
          * Obs.: Nao pode realizar o join.
          */
         while (pthread_create(&(cliente->thread), &tattr, f_cliente, cliente) != 0) {
-            #if MODO_DEBUG
+            #if MODO_ERROR
             printf("\nErro ao criar thread cliente %d\n", quantThreadCriadas);
             #endif
 
@@ -199,7 +207,7 @@ int main(int argc, char** argv) {
     /* cria pedido de cancelamento das threads barbeiros */
     for (i = 0; i < quantBarbeiros; i++) {
         while(pthread_cancel(barbeiros[i].thread) != 0) {
-            #if MODO_DEBUG
+            #if MODO_ERROR
             printf("\nErro ao criar pedido de cancelamento da thread barbeiro %d\n", i);
             #endif
             
@@ -227,7 +235,7 @@ int main(int argc, char** argv) {
          * https://man7.org/linux/man-pages/man3/pthread_join.3.html
          */
         while(pthread_join(barbeiros[i].thread, &status) != 0) {
-            #if MODO_DEBUG
+            #if MODO_ERROR
             printf("\nErro ao unir thread barbeiro %d\n", i);
             #endif   
 
@@ -298,7 +306,7 @@ void* f_barbeiro(void* argumento) {
             #if MODO_DEBUG
             printf("barbeiro %d atingiu seu objetivo!\n", barbeiro->id);
             #endif
-            
+
             sem_post(barbeiro->totalAtingiramObjetivo);
 
             #ifdef _WIN32
