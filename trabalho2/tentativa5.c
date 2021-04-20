@@ -140,9 +140,9 @@ int main(int argc, char** argv) {
             #endif   
 
             #ifdef _WIN32
-            Sleep(1000);
+            Sleep(100);
             #else
-            sleep(1);
+            usleep(100);
             #endif
         }
     }
@@ -180,9 +180,9 @@ int main(int argc, char** argv) {
             #endif
 
             #ifdef _WIN32
-            Sleep(1000);
+            Sleep(100);
             #else
-            sleep(1);
+            usleep(100);
             #endif
         } 
 
@@ -212,9 +212,9 @@ int main(int argc, char** argv) {
             #endif
             
             #ifdef _WIN32
-            Sleep(1000);
+            Sleep(100);
             #else
-            sleep(1);
+            usleep(100);
             #endif
         }
     }
@@ -240,9 +240,9 @@ int main(int argc, char** argv) {
             #endif   
 
             #ifdef _WIN32
-            Sleep(1000);
+            Sleep(100);
             #else
-            sleep(1);
+            usleep(100);
             #endif
         }
 
@@ -299,6 +299,13 @@ void* f_barbeiro(void* argumento) {
         #if MODO_DEBUG
         printf("barbeiro %d acordou!\n", barbeiro->id);
         #endif
+        
+        /* ___ barbeiro atentendo um cliente __ */
+        #ifdef _WIN32
+        Sleep(100);
+        #else
+        usleep(100);
+        #endif        
 
         barbeiro->clientesAtendidos++;
 
@@ -308,10 +315,6 @@ void* f_barbeiro(void* argumento) {
             #endif
 
             sem_post(barbeiro->totalAtingiramObjetivo);
-
-            #ifdef _WIN32
-            Sleep(1);
-            #endif
         }
 
         sem_post(barbeiro->barbeirosAtendeuCliente); /* barbeiro terminou de atender o cliente */
@@ -406,9 +409,9 @@ void* f_cliente(void* argumento) {
     /* obtem a quantidade de barbeiros que ja atingiram o objetivo */
     while (sem_getvalue(cliente->totalAtingiramObjetivo, &totalBarbeirosConcluiramObjetivo) != 0) {
         #ifdef _WIN32
-        Sleep(1000);
+        Sleep(100);
         #else
-        sleep(1);
+        usleep(100);
         #endif
     }
 
@@ -418,9 +421,9 @@ void* f_cliente(void* argumento) {
         /* obtem a quantidade de clientes que visitaram/entraram */
         while (sem_getvalue(cliente->totalClientesVisitaramBarbearia, &totalClientesVisitaram) != 0) {
             #ifdef _WIN32
-            Sleep(1000);
+            Sleep(100);
             #else
-            sleep(1);
+            usleep(100);
             #endif
         }
 
