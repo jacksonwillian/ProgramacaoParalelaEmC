@@ -1,0 +1,218 @@
+º10
+
+#LAB[1] diz: 'Na posição=1 da bancada nº1 não produz vírus'
+#LAB[1] diz: 'Na posição=2 da bancada nº1 há 1 injeção'
+#LAB[1] diz: 'Na posição=3 da bancada nº1 há 1 elementoX'
+
+
+#LAB[2] diz: 'Na posição=4 da bancada nº2 há 1 vírus'
+#LAB[2] diz: 'Na posição=5 da bancada nº2 não produz injeção'
+#LAB[2] diz: 'Na posição=6 da bancada nº2 há 1 elementoX'
+
+
+#LAB[3] diz: 'Na posição=7 da bancada nº3 há 1 vírus'
+#LAB[3] diz: 'Na posição=8 da bancada nº3 há 1 injeção'
+#LAB[3] diz: 'Na posição=9 da bancada nº3 não produz elementoX'
+
+
+~INF[1] diz: 'Na posição=1 da bolsa nº1 há infinitos vírus'
+~INF[1] diz: 'Na posição=2 da bolsa nº1 há 0 injeção'
+~INF[1] diz: 'Na posição=3 da bolsa nº1 há 0 elementoX'
+
+
+~INF[1] diz: 'vou buscar meus insumos!'
+
+~INF[1] diz: 'Estou no LAB[2]'
+
+~INF[1] diz: 'peguei um elementoX!'
+
+~INF[1] diz: 'Estou no LAB[3]'
+
+~INF[1] diz: 'peguei um injeção!'
+
+~INF[1] diz: 'Terminei o que eu tinha que fazer!'
+
+~INF[2] diz: 'Na posição=1 da bolsa nº2 há 0 vírus'
+~INF[2] diz: 'Na posição=2 da bolsa nº2 há infinitos injeção'
+~INF[2] diz: 'Na posição=3 da bolsa nº2 há 0 elementoX'
+
+
+~INF[2] diz: 'vou buscar meus insumos!'
+
+~INF[2] diz: 'Estou no LAB[2]'
+
+~INF[2] diz: 'peguei um virus!'
+
+~INF[2] diz: 'O estoque estah vazio no LAB[2]'
+
+~INF[2] diz: 'Estou no LAB[3]'
+
+~INF[2] diz: 'Estou no LAB[1]'
+
+~INF[2] diz: 'peguei um elementoX!'
+
+~INF[2] diz: 'Terminei o que eu tinha que fazer!'
+
+~INF[3] diz: 'Na posição=1 da bolsa nº3 há 0 vírus'
+~INF[3] diz: 'Na posição=2 da bolsa nº3 há 0 injeção'
+~INF[3] diz: 'Na posição=3 da bolsa nº3 há infinitos elementoX'
+
+
+~INF[3] diz: 'vou buscar meus insumos!'
+
+~INF[3] diz: 'Estou no LAB[1]'
+
+~INF[3] diz: 'peguei um injeção!'
+
+~INF[3] diz: 'O estoque estah vazio no LAB[1]'
+
+~INF[3] diz: 'Estou no LAB[2]'
+
+~INF[3] diz: 'O estoque estah vazio no LAB[2]'
+
+~INF[3] diz: 'Estou no LAB[3]'
+
+~INF[3] diz: 'peguei um virus!'
+
+~INF[3] diz: 'O estoque estah vazio no LAB[3]'
+
+~INF[3] diz: 'Terminei o que eu tinha que fazer!'
+
+#LAB[1] diz: 'Na posição=1 da bancada nº1 não produz vírus'
+#LAB[1] diz: 'Na posição=2 da bancada nº1 há 0 injeção'
+#LAB[1] diz: 'Na posição=3 da bancada nº1 há 0 elementoX'
+
+
+#LAB[2] diz: 'Na posição=4 da bancada nº2 há 0 vírus'
+#LAB[2] diz: 'Na posição=5 da bancada nº2 não produz injeção'
+#LAB[2] diz: 'Na posição=6 da bancada nº2 há 0 elementoX'
+
+
+~INF[2] diz: 'Na posição=1 da bolsa nº2 há 1 vírus'
+~INF[2] diz: 'Na posição=2 da bolsa nº2 há infinitos injeção'
+~INF[2] diz: 'Na posição=3 da bolsa nº2 há 1 elementoX'
+
+
+~INF[2] diz: 'vou buscar meus insumos!'
+
+~INF[2] diz: 'Estou no LAB[3]'
+
+~INF[2] diz: 'O estoque estah vazio no LAB[3]'
+
+~INF[2] diz: 'Estou no LAB[1]'
+
+~INF[2] diz: 'O estoque estah vazio no LAB[1]'
+
+~INF[2] diz: 'Estou no LAB[2]'
+
+~INF[2] diz: 'O estoque estah vazio no LAB[2]'
+
+~INF[2] diz: 'Terminei o que eu tinha que fazer!'
+
+#LAB[1] diz: 'Na posição=1 da bancada nº1 não produz vírus'
+#LAB[1] diz: 'Na posição=2 da bancada nº1 há 0 injeção'
+#LAB[1] diz: 'Na posição=3 da bancada nº1 há 0 elementoX'
+
+
+~INF[3] diz: 'Na posição=1 da bolsa nº3 há 1 vírus'
+~INF[3] diz: 'Na posição=2 da bolsa nº3 há 1 injeção'
+~INF[3] diz: 'Na posição=3 da bolsa nº3 há infinitos elementoX'
+
+
+~INF[3] diz: 'vou buscar meus insumos!'
+
+~INF[3] diz: 'Estou no LAB[2]'
+
+~INF[3] diz: 'O estoque estah vazio no LAB[2]'
+
+~INF[3] diz: 'Estou no LAB[3]'
+
+~INF[3] diz: 'O estoque estah vazio no LAB[3]'
+
+~INF[3] diz: 'Estou no LAB[1]'
+
+~INF[3] diz: 'O estoque estah vazio no LAB[1]'
+
+~INF[3] diz: 'Terminei o que eu tinha que fazer!'
+
+#LAB[3] diz: 'Na posição=7 da bancada nº3 há 0 vírus'
+#LAB[3] diz: 'Na posição=8 da bancada nº3 há 0 injeção'
+#LAB[3] diz: 'Na posição=9 da bancada nº3 não produz elementoX'
+
+
+#LAB[2] diz: 'Na posição=4 da bancada nº2 há 0 vírus'
+#LAB[2] diz: 'Na posição=5 da bancada nº2 não produz injeção'
+#LAB[2] diz: 'Na posição=6 da bancada nº2 há 0 elementoX'
+
+
+~INF[1] diz: 'Na posição=1 da bolsa nº1 há infinitos vírus'
+~INF[1] diz: 'Na posição=2 da bolsa nº1 há 1 injeção'
+~INF[1] diz: 'Na posição=3 da bolsa nº1 há 1 elementoX'
+
+
+~INF[1] diz: 'vou buscar meus insumos!'
+
+~INF[1] diz: 'Estou no LAB[1]'
+
+~INF[1] diz: 'O estoque estah vazio no LAB[1]'
+
+~INF[1] diz: 'Estou no LAB[2]'
+
+~INF[1] diz: 'O estoque estah vazio no LAB[2]'
+
+~INF[1] diz: 'Estou no LAB[3]'
+
+~INF[1] diz: 'O estoque estah vazio no LAB[3]'
+
+~INF[1] diz: 'Terminei o que eu tinha que fazer!'
+
+#LAB[3] diz: 'Na posição=7 da bancada nº3 há 0 vírus'
+#LAB[3] diz: 'Na posição=8 da bancada nº3 há 0 injeção'
+#LAB[3] diz: 'Na posição=9 da bancada nº3 não produz elementoX'
+
+
+~INF[3] diz: 'Na posição=1 da bolsa nº3 há 1 vírus'
+~INF[3] diz: 'Na posição=2 da bolsa nº3 há 1 injeção'
+~INF[3] diz: 'Na posição=3 da bolsa nº3 há infinitos elementoX'
+
+
+~INF[3] diz: 'vou buscar meus insumos!'
+
+~INF[3] diz: 'Estou no LAB[3]'
+
+~INF[3] diz: 'O estoque estah vazio no LAB[3]'
+
+~INF[3] diz: 'Estou no LAB[1]'
+
+~INF[3] diz: 'O estoque estah vazio no LAB[1]'
+
+~INF[3] diz: 'Estou no LAB[2]'
+
+~INF[3] diz: 'O estoque estah vazio no LAB[2]'
+
+~INF[3] diz: 'Terminei o que eu tinha que fazer!'
+
+~INF[2] diz: 'Na posição=1 da bolsa nº2 há 1 vírus'
+~INF[2] diz: 'Na posição=2 da bolsa nº2 há infinitos injeção'
+~INF[2] diz: 'Na posição=3 da bolsa nº2 há 1 elementoX'
+
+
+~INF[2] diz: 'vou buscar meus insumos!'
+
+~INF[2] diz: 'Estou no LAB[1]'
+
+~INF[2] diz: 'O estoque estah vazio no LAB[1]'
+
+~INF[2] diz: 'Estou no LAB[2]'
+
+~INF[2] diz: 'O estoque estah vazio no LAB[2]'
+
+~INF[2] diz: 'Estou no LAB[3]'
+
+~INF[2] diz: 'O estoque estah vazio no LAB[3]'
+
+~INF[2] diz: 'Terminei o que eu tinha que fazer!'
+
+#LAB[2] diz: 'Na posição=4 da bancada nº2 há 0 vírus'
+#LAB[2] diz: 'Na posição=5 da bancada nº2 não produz injeção'
+#LAB[2] diz: 'Na posição=6 da bancada nº2 há 0 elementoX'
